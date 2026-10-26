@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>xgoose · Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="page-header">
+        <p class="eyebrow">Settings</p>
+        <h1><span class="dot" aria-hidden="true"></span>xgoose</h1>
+        <p class="subtitle">
+          Your assistant, ready on the websites you use.
+          Start with free hosted AI, then make it your own.
+        </p>
+      </header>
+
+      <div class="layout">
+        <nav class="settings-nav" aria-label="Settings sections">
+          <a class="nav-link" href="onboarding.html"><span>Getting started</span></a>
+          <a class="nav-link" href="#section-account"><span>Free AI & account</span></a>
+          <a class="nav-link" href="#section-connection"
+            ><span>Connection</span></a
+          >
+          <a class="nav-link" href="#section-skills"><span>Skills</span></a>
+          <a class="nav-link" href="#section-personalization"
+            ><span>Personalization</span></a
+          >
+          <a class="nav-link" href="#section-advanced"
+            ><span>Advanced</span></a
+          >
+          <a class="nav-link" href="#section-about"><span>About</span></a>
+        </nav>
+
+        <main class="settings-main">
+          <section id="section-account" aria-labelledby="account-heading">
+            <div class="section-head">
+              <h2 id="account-heading">Get your free API key</h2>
+            </div>
+            <p class="hint">
+              Sign in with email to use xgoose Hosted AI and claim your free trial credit.
+              Your connection is managed automatically; there is no API key to copy.
+            </p>
+            <div
+              id="accountState"
+              class="account-state account-state-loading"
+            >
+              <div class="account-state-body">Loading…</div>
+            </div>
+          </section>
+
+          <section
+            id="section-connection" inert data-settings-loading
+            aria-labelledby="connection-heading"
+          >
+            <div class="section-head">
+              <h2 id="connection-heading">Connection</h2>
+            </div>
+            <p class="hint">
+              Use your free xgoose account, or connect a provider you already pay for.
+            </p>
+
+            <div class="field">
+              <label for="connectionMode" class="field-label">Connect with</label>
+              <select id="connectionMode"><option value="hosted">Free API Key · xgoose Hosted AI</option><option value="byok">Bring your own key (BYOK)</option></select>
+            </div>
+            <div class="field" id="providerRow" hidden>
+              <label for="provider" class="field-label">Provider</label>
+              <select id="provider">
+                <option value="xgoose-hosted">
+                  xgoose Hosted AI — uses your account quota
+                </option>
+                <option value="gemini">
+                  Gemini API (Google) — bring your own key
+                </option>
+                <option value="gemini-litellm">
+                  Gemini via LiteLLM proxy
+                </option>
+                <option value="openai-compat">OpenAI-compatible</option>
+              </select>
+            </div>
+
+            <div class="field-grid two" id="modelGrid">
+              <div class="field">
+                <label for="model" class="field-label">Model</label>
+                <select id="model"></select>
+              </div>
+              <label class="toggle-card" id="modelCustomToggleRow" hidden>
+                <input id="modelCustomToggle" type="checkbox" />
+                <span class="toggle-card-body">
+                  <span class="toggle-card-title">Custom model</span>
+                  <span class="toggle-card-hint">
+                    Type any model name your endpoint supports.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div class="field" id="modelCustomRow" hidden>
+              <label for="modelCustom" class="field-label">
+                Custom model name
+              </label>
+              <input
+                id="modelCustom"
+                type="text"
+                autocomplete="off"
+                placeholder="e.g. gemini-2.5-pro-exp"
+              />
+            </div>
+
+            <div class="field" id="hostedStatusRow" hidden>
+              <div class="callout">
+                <span class="hint" id="hostedStatusHint"></span>
+              </div>
+            </div>
+
+            <div class="field" id="apiKeyRow" hidden>
+              <label for="apiKey" class="field-label">API key</label>
+              <div class="input-with-action">
+                <input
+                  id="apiKey"
+                  type="password"
+                  autocomplete="off"
+                  placeholder="sk-…"
+                />
+
+              </div>
+            </div>
+
+            <div class="field" id="baseUrlOuterRow" hidden>
+              <label for="baseUrl" class="field-label" id="baseUrlRow">
+                Base URL
+              </label>
+              <input
+                id="baseUrl"
+                type="text"
+                autocomplete="off"
+                placeholder="https://your-litellm-proxy.example/v1"
+              />
+              <span class="hint" id="baseUrlHint"></span>
+            </div>
+            <div id="apiKeyTestRow" class="connection-test">
+              <button id="testApiKeyBtn" class="btn secondary" type="button">Test hosted AI</button>
+              <span id="testApiKeyStatus" class="save-status" role="status" aria-live="polite"></span>
+            </div>
+          </section>
+
+          <section id="section-skills" aria-labelledby="skills-heading">
+            <div class="section-head">
+              <h2 id="skills-heading">Skills</h2>
+              <button id="addSkillBtn" class="btn primary compact" type="button">
+                Install from file or URL
+              </button>
+            </div>
+            <p class="hint">
+              Your built-in skills are ready to use. Enable or
+              disable installed skills below, or edit their source. Built-in skills work
+              without Allow User Scripts. Community skills, local edits and online
+              updates require it. Skills can read or change the current page;
+              install only skills you trust.
+              Local files and pasted source work without publishing or an account.
+              <a href="https://xgoose.org/skills/" target="_blank" rel="noopener">Browse website skills</a>.
+            </p>
+            <details class="installed-skills"><summary id="installedSkillSummary">Manage installed skills</summary><div id="skillList" class="skill-list"></div></details>
+          </section>
+
+          <section
+            id="skillEditor"
+            class="skill-editor"
+            aria-labelledby="skillEditorTitle"
+            hidden
+          >
+            <div class="section-head">
+              <h2><span id="skillEditorTitle">Edit skill</span></h2>
+            </div>
+            <p class="hint">
+              Skills are a single <code>.xgs.js</code> file (Tampermonkey-style
+              header + JS body). Edit the source below — the header is parsed
+              and validated on save, the body is bundled at install time. See
+              <a
+                href="https://github.com/xGoose-dev/xgoose/blob/codex/chrome-pi-release/apps/firefox/skills/SKILL_AUTHORING.md"
+                target="_blank"
+                rel="noopener"
+                >SKILL_AUTHORING.md</a
+              >
+              for the format.
+            </p>
+            <div class="field">
+              <label for="skillSource" class="field-label">
+                <code>.xgs.js</code> source
+              </label>
+              <textarea
+                id="skillSource"
+                rows="22"
+                class="mono"
+                placeholder="// ==XGooseSkill==&#10;// @name         my-skill&#10;// @namespace    myskill&#10;// @version      0.0.1&#10;// @description  What this does&#10;// @match        *://example.com/*&#10;// @primary      foo&#10;// ==/XGooseSkill==&#10;&#10;import { defineSkill, fn } from '@xgoose/skill';&#10;import { z } from 'zod';&#10;&#10;export default defineSkill({&#10;  foo: fn({&#10;    summary: 'Do the thing.',&#10;    input: z.object({ x: z.string() }),&#10;    handler: async ({ x }) => ({ ok: true, x }),&#10;  }),&#10;});"
+              ></textarea>
+              <span class="hint">
+                The
+                <code>// ==XGooseSkill== … // ==/XGooseSkill==</code>
+                header drives matches / namespace / version. After save,
+                navigate to a matching URL (or reload) for the skill to
+                activate.
+              </span>
+            </div>
+            <div class="skill-editor-actions">
+              <span id="skillEditorStatus" class="save-status"></span>
+              <button id="skillCancelBtn" class="btn secondary" type="button">
+                Cancel
+              </button>
+              <button
+                id="skillDeleteBtn"
+                class="btn danger"
+                type="button"
+                hidden
+              >
+                Delete
+              </button>
+              <button id="skillSaveBtn" class="btn primary" type="button">
+                Save skill
+              </button>
+            </div>
+          </section>
+
+          <section
+            id="section-personalization" inert data-settings-loading
+            aria-labelledby="personalization-heading"
+          >
+            <div class="section-head">
+              <h2 id="personalization-heading">Personalization</h2>
+            </div>
+            <div class="preference-list">
+              <div class="preference-row"><div class="preference-copy"><label for="language">Interface language</label><p class="hint">Only changes buttons, menus and settings.</p></div><select id="language"><option value="auto">Follow browser language</option><option value="zh-CN">中文（简体）</option><option value="en">English</option><option value="es">Español</option></select></div>
+              <div class="preference-row"><div class="preference-copy"><label for="answerLanguage">Preferred Answer Language</label><p class="hint">Automatic follows your conversation. Choosing a language sets a default; requests in chat take priority.</p><span id="answerLanguageStatus" class="hint" role="status">Saved automatically.</span></div><select id="answerLanguage"><option value="auto">Automatic</option><option value="zh-CN">中文（简体）</option><option value="en">English</option><option value="es">Español</option></select></div>
+              <div class="preference-row"><div class="preference-copy"><label for="theme">Theme</label><p class="hint">System mirrors your OS preference automatically.</p></div><select id="theme"><option value="system">Follow system</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+              <div class="preference-row"><div class="preference-copy"><label for="launcherVisibility">Floating button</label><p class="hint">Choose where the launcher appears. An open chat stays visible.</p></div><select id="launcherVisibility"><option value="always">Show on every page</option><option value="skill-sites">Only on sites with a matching skill</option></select></div>
+              <div class="preference-row"><div class="preference-copy"><span class="preference-label">Panel layout</span><p class="hint">Move the floating button and resize the panel on any page.</p><details class="layout-details"><summary>Current position and size</summary><div id="layoutInfo" class="hint"></div></details></div><button id="resetLayoutBtn" class="btn secondary compact" type="button">Reset position &amp; size</button></div>
+              <label class="preference-row analytics-choice" for="analyticsEnabled"><span class="preference-copy"><span class="preference-label">Share usage analytics</span><span class="hint">Share setup steps, action outcomes and timing to improve xgoose. Signed-in events can be linked to your account. No messages, keys or full page URLs. Turn off anytime.</span></span><input id="analyticsEnabled" type="checkbox"></label>
+            </div>
+          </section>
+
+          <section id="section-advanced" inert data-settings-loading aria-labelledby="advanced-heading">
+            <div class="section-head">
+              <h2 id="advanced-heading">Advanced</h2>
+            </div>
+            <p class="hint">
+              Sensitive header values (<code>Authorization</code>,
+              <code>Cookie</code>, …) are always redacted before being shown
+              to the model — this protection is on by default and cannot be
+              turned off.
+            </p>
+            <div class="field">
+              <label for="jsExecTimeoutMs" class="field-label">
+                <code>js_exec</code> timeout (ms)
+              </label>
+              <input
+                id="jsExecTimeoutMs"
+                type="number"
+                min="1000"
+                max="600000"
+                step="1000"
+              />
+              <input id="jsExecTimeoutMsToggle" type="hidden" />
+              <span class="hint">
+                Currently
+                <strong id="jsExecTimeoutMsLabel">30s</strong>. Increase if a
+                skill needs longer to scrape (e.g. large award calendars).
+              </span>
+            </div>
+          </section>
+
+          <section id="section-about" aria-labelledby="about-heading">
+            <div class="section-head">
+              <h2 id="about-heading">About</h2>
+            </div>
+            <p class="hint">
+              xgoose-extension-firefox is the Firefox MV3 host for the xgoose
+              agent. Built on
+              <a
+                href="https://github.com/xGoose-dev/xgoose-agent-core"
+                target="_blank"
+                rel="noopener"
+                >@xgoose/core</a
+              >
+              +
+              <a
+                href="https://github.com/xGoose-dev/xgoose-agent-core"
+                target="_blank"
+                rel="noopener"
+                >@xgoose/page-controller</a
+              >
+              +
+              <a
+                href="https://github.com/xGoose-dev/xgoose-agent-core"
+                target="_blank"
+                rel="noopener"
+                >@xgoose/ui</a
+              >.
+            </p>
+            <p class="hint">
+              On strict-CSP sites the <code>js_exec</code> tool may fail to
+              inject the page bridge. Tools that don't need DOM access still
+              work.
+            </p>
+          </section>
+        </main>
+      </div>
+
+      <aside id="privacyDisclaimer" class="hint" aria-label="Privacy disclaimer">
+        <p><strong>Privacy disclaimer.</strong> By using xgoose Hosted AI, you agree that full messages, tool inputs and outputs, errors and summaries are stored for 90 days. Credentials are redacted. Website hostnames are included to diagnose site-specific issues. Only administrators can read cloud transcripts, and every read is audited. BYOK conversations are not uploaded to xgoose by this extension.</p>
+        <p><a href="https://xgoose.org/privacy/" target="_blank" rel="noopener">Privacy policy</a> · <a href="https://xgoose.org/account/" target="_blank" rel="noopener">Manage your account</a></p>
+      </aside>
+      <div class="footer">
+        <span id="saveStatus" class="save-status"></span>
+        <button id="resetBtn" disabled class="btn secondary" type="button">
+          Reset to defaults
+        </button>
+        <button id="saveBtn" disabled class="btn primary" type="button">Save</button>
+      </div>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>

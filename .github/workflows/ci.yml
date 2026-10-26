@@ -1,0 +1,32 @@
+name: Firefox CI
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm run lint:amo
+      - name: Install official Firefox
+        run: |
+          curl --fail --location 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US' -o "$RUNNER_TEMP/firefox.tar.xz"
+          tar -xf "$RUNNER_TEMP/firefox.tar.xz" -C "$RUNNER_TEMP"
+          echo "FIREFOX_BINARY=$RUNNER_TEMP/firefox/firefox" >> "$GITHUB_ENV"
+      - run: npm run e2e
+      - run: python3 -m unittest discover -s tests -p 'release_test.py'
+      - run: npm run package
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: firefox-${{ github.sha }}
+          path: |
+            artifacts/ci-release/
+            artifacts/firefox-e2e/

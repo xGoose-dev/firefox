@@ -1,0 +1,23 @@
+name: Firefox release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check && npm run lint:amo && npm run package
+      - name: Attach reproducible Firefox build and source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git archive --format=zip --output=artifacts/ci-release/xgoose-firefox-source.zip HEAD
+          gh release create "$GITHUB_REF_NAME" artifacts/ci-release/* --title "xgoose for Firefox $GITHUB_REF_NAME" --notes-file docs/store/firefox-release-notes.md

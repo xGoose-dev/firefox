@@ -66,6 +66,17 @@ try{
  await driver.wait(async()=>driver.findElement(By.id('connectionState')).getText().then(t=>t.includes('Your own provider is configured')),10000);
  assert.equal(await driver.findElement(By.id('permissionStep')).getAttribute('open'),null);
  await writeFile('artifacts/firefox-e2e/onboarding.png',await driver.takeScreenshot(),'base64');
+ await driver.findElement(By.css('#answerLanguage option[value="zh-CN"]')).click();
+ await driver.wait(async()=>driver.executeScript("return document.documentElement.lang==='zh-CN'"),10000,'onboarding language did not translate immediately');
+ const chosen=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.get('xgoose.settings').then(data=>done(data['xgoose.settings']));`);
+ assert.equal(chosen.language,'zh-CN');assert.equal(chosen.answerLanguage,'zh-CN');assert.equal(chosen.apiKeys['openai-compat'],'synthetic-test');
+ assert.equal(await driver.findElement(By.css('label[for="answerLanguage"]')).getText(),'界面和回答语言');
+ await writeFile('artifacts/firefox-e2e/onboarding-language-zh.png',await driver.takeScreenshot(),'base64');
+ await driver.findElement(By.css('#answerLanguage option[value="auto"]')).click();
+ await driver.wait(async()=>driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.get('xgoose.settings').then(data=>done(data['xgoose.settings'].language==='auto'&&data['xgoose.settings'].answerLanguage==='auto'));`),10000);
+ await driver.findElement(By.css('#answerLanguage option[value="en"]')).click();
+ await driver.wait(async()=>driver.executeScript("return document.documentElement.lang==='en'"),10000);
+
  await driver.manage().window().setRect({width:390,height:844});
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.get('xgoose.settings').then(d=>browser.storage.local.set({'xgoose.settings':{...d['xgoose.settings'],language:'zh-CN'}})).then(()=>done(true));`);
  await driver.wait(async()=>driver.findElement(By.id('accountStepTitle')).getText().then(t=>t==='连接你的 AI'),10000);

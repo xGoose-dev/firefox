@@ -383,5 +383,10 @@
   "Use Hosted AI": "Usar IA alojada",
   "Hosted AI & account": "IA alojada y cuenta",
   "xgoose Hosted AI · account credit": "IA alojada de xgoose · saldo de cuenta",
-  "In Firefox’s prompt, select Allow user scripts, then click Allow.": "En el aviso de Firefox, marca Permitir scripts de usuario y pulsa Permitir."
+  "In Firefox’s prompt, select Allow user scripts, then click Allow.": "En el aviso de Firefox, marca Permitir scripts de usuario y pulsa Permitir.",
+  "Uninstall": "Desinstalar",
+  "Uninstall failed": "No se pudo desinstalar",
+  "Uninstall custom skill \"{name}\"? Export any local edits first. A bundled copy, if present, will remain available.": "¿Desinstalar el skill personalizado \"{name}\"? Exporta primero los cambios locales. Si existe una copia incluida, seguirá disponible.",
+  "This links your local skill to the reviewed marketplace entry and installs that version.": "Esto vincula tu skill local con la entrada revisada del catálogo e instala esa versión.",
+  "Interface and answer language": "Idioma de la interfaz y las respuestas"
 }

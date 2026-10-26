@@ -8,7 +8,7 @@ streaming adapted to Firefox. MIT licensed.
 ## Install
 
 [Get xgoose on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/xgoose/).
-Firefox 0.3.3 requires **Firefox 153 or later** on desktop and Android.
+Firefox 0.3.4 requires **Firefox 153 or later** on desktop and Android.
 It uses document-scoped script injection and `userScripts.execute`, introduced in
 Firefox 153. Until Mozilla publishes this update, the store may offer the older release.
 

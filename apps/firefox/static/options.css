@@ -1609,3 +1609,6 @@ a.btn { text-decoration:none; display:inline-flex; align-items:center; justify-c
 .onboarding .byok-alternative{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .onboarding .extension-details-url{overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){.onboarding *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+.skill-row-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.skill-row-actions .skill-edit{margin:0}

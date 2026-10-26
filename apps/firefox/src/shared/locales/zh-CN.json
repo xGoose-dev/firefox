@@ -383,5 +383,10 @@
   "Use Hosted AI": "使用托管 AI",
   "Hosted AI & account": "托管 AI 与账户",
   "xgoose Hosted AI · account credit": "xgoose 托管 AI · 账户额度",
-  "In Firefox’s prompt, select Allow user scripts, then click Allow.": "在 Firefox 提示中勾选“允许运行用户脚本”，然后点击“允许”。"
+  "In Firefox’s prompt, select Allow user scripts, then click Allow.": "在 Firefox 提示中勾选“允许运行用户脚本”，然后点击“允许”。",
+  "Uninstall": "卸载",
+  "Uninstall failed": "卸载失败",
+  "Uninstall custom skill \"{name}\"? Export any local edits first. A bundled copy, if present, will remain available.": "卸载自定义技能“{name}”？请先导出需要保留的本地修改；若有内置副本，内置副本仍可使用。",
+  "This links your local skill to the reviewed marketplace entry and installs that version.": "这会将本地技能关联到已核对的技能市场条目，并安装该版本。",
+  "Interface and answer language": "界面和回答语言"
 }

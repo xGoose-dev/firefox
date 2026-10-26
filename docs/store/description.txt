@@ -35,3 +35,5 @@ When using Hosted AI, full messages and actual tool inputs, outputs and errors a
 Open source under the MIT license: https://github.com/xGoose-dev/firefox
 Setup and support: https://xgoose.org/support/
 Privacy policy: https://xgoose.org/privacy/
+
+AI-provider usage charges may apply. Hosted AI requires available account credit; trial availability is shown in your account.

@@ -29,3 +29,9 @@ Onboarding review fixes:
 Validation uses 70 shared unit tests, six archive safety tests, TypeScript, Mozilla
 addons-linter, and a real Firefox 158.0.1 browser regression with a synthetic local
 provider. The browser suite also exercises the real optional permission prompt.
+
+Firefox gallery uses the same xgoose logo and feature-illustration design as Chrome.
+All platform labels say “for Firefox”; the onboarding image embeds actual Firefox
+Getting started UI and omits Chrome-specific permission switches. Six gallery
+images cover research, skills, connection, images, first use and custom scripts.
+The packaged toolbar icons are byte-identical to Chrome 0.3.1.

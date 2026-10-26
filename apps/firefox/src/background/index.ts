@@ -1,3 +1,5 @@
+import {withHostedSession} from './hostedSession';
+import {providerFetch} from './providerFetch';
 import {executableSkillsForUrl, injectPackagedSkills, reconcileSkills, skillSnapshot, pageTarget} from "./packagedSkills";
 import { installSkillUpdateChecks, checkSkillUpdates, skillUpdateState, updateSkill } from "./skillUpdates";
 import { hostedStatus } from "./hosted";
@@ -99,11 +101,7 @@ registerRouter({
   // ── provider fetch proxy ────────────────────────────────────────────
   "sw:proxy_fetch": async (payload) => {
     try {
-      const resp = await fetch(payload.url, {
-        method: payload.method,
-        headers: payload.headers,
-        body: payload.body,
-      });
+      const resp = await providerFetch(payload);
       const body = await resp.text();
       const headers: Record<string, string> = {};
       resp.headers.forEach((v, k) => (headers[k] = v));
@@ -346,10 +344,10 @@ registerRouter({
       return { ok: false, error: "Not signed in", signedIn: false };
     }
     const path = `/ai/v1/models${refresh ? "?refresh=1" : ""}`;
-    const res = await apiFetch<{ data?: Array<{ id?: unknown }> }>(path, {
+    const res = await withHostedSession(a=>apiFetch<{ data?: Array<{ id?: unknown }> }>(path, {
       method: "GET",
-      bearer: account.accessToken,
-    });
+      bearer: a.accessToken,
+    }),{accountId:account.user.id});
     if (!res.ok) {
       return {
         ok: false,
@@ -483,12 +481,7 @@ async function runStream(
 
   let resp: Response;
   try {
-    resp = await fetch(req.url, {
-      method: req.method,
-      headers: req.headers,
-      body: req.body,
-      signal: ac.signal,
-    });
+    resp = await providerFetch(req,ac.signal);
   } catch (err: any) {
     safePost(port, {
       kind: "error",

@@ -56,6 +56,9 @@ async function run() {
       entryPoints: [resolve(root, e.in)],
       outfile: resolve(out, `${e.out}.js`),
       format: e.format,
+      // Keep the bundled local tokenizer below AMO's 5 MB JavaScript parser
+      // limit. Identifiers remain intact; complete sources accompany uploads.
+      ...(e.out === 'content' ? { minifyWhitespace: true, minifySyntax: true } : {}),
     };
     if (isWatch) {
       const ctx = await context(opts);

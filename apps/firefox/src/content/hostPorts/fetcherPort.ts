@@ -13,6 +13,7 @@
 
 import type { HostFetcher } from "@xgoose/core";
 import { send } from "@/shared/messages";
+import { makeStreamingResponse } from "./streamingResponse";
 // New envelope shape: send('sw:foo', payload) wraps as { kind, payload }
 // — content fetcher only calls 'sw:proxy_fetch' and
 // 'sw:proxy_fetch_stream_open', both of which already match.
@@ -221,46 +222,4 @@ function openStreaming(
         reject(err);
       });
   });
-}
-
-function makeStreamingResponse(
-  status: number,
-  headers: Record<string, string>,
-  stream: ReadableStream<Uint8Array>,
-): Response {
-  const fake = {
-    status,
-    statusText: "",
-    ok: status >= 200 && status < 300,
-    redirected: false,
-    type: "basic" as const,
-    url: "",
-    headers: new Headers(headers),
-    body: stream,
-    bodyUsed: false,
-    clone(): Response {
-      throw new Error("streaming response is not cloneable");
-    },
-    async text(): Promise<string> {
-      throw new Error("streaming response: use .body instead of .text()");
-    },
-    async json(): Promise<unknown> {
-      throw new Error("streaming response: use .body instead of .json()");
-    },
-    async arrayBuffer(): Promise<ArrayBuffer> {
-      throw new Error(
-        "streaming response: use .body instead of .arrayBuffer()",
-      );
-    },
-    async blob(): Promise<Blob> {
-      throw new Error("streaming response: use .body instead of .blob()");
-    },
-    async formData(): Promise<FormData> {
-      throw new Error("streaming response: use .body instead of .formData()");
-    },
-    async bytes(): Promise<Uint8Array> {
-      throw new Error("streaming response: use .body instead of .bytes()");
-    },
-  };
-  return fake as unknown as Response;
 }

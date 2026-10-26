@@ -35,3 +35,26 @@ All platform labels say “for Firefox”; the onboarding image embeds actual Fi
 Getting started UI and omits Chrome-specific permission switches. Six gallery
 images cover research, skills, connection, images, first use and custom scripts.
 The packaged toolbar icons are byte-identical to Chrome 0.3.1.
+
+
+## Firefox 0.3.2 — model-sized context (October 26, 2026)
+
+Ports the context-window fix from Chrome commit 283fd9c. Context is based on the
+selected model capacity with output headroom instead of a fixed 128K / 175 KB
+trigger. Current-request token occupancy includes instructions, tool schemas and
+images; estimates are marked, and provider rejection remains authoritative.
+Automatic compaction keeps full local history and avoids replaying actions.
+Firefox-specific API, stream and realm shims, onboarding, permissions and the
+six store images are preserved. No default-model change is included.
+
+The real Firefox rejection regression also found and fixes unreadable streamed
+HTTP error bodies. Provider error codes now reach compaction/retry handling.
+
+Validation: TypeScript and build, 78 unit tests, six archive tests, Mozilla linter
+(0 errors, 16 existing sanitization warnings), and Firefox 158.0.1 passed. The
+Firefox suite makes 40 local synthetic provider requests: large input preserved
+without summaries, small model compaction, one rejection/retry, plus the original
+read-page, streaming, built-in skills, native permission and custom script checks.
+Core is marked side-effect free so unused agent/tokenizer code is removed from
+Settings and onboarding. Existing permission checks wait for script initialization
+and the actual native checkbox before interacting.

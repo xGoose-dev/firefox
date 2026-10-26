@@ -1,0 +1,10 @@
+Firefox 0.3.2 fixes context handling for long conversations.
+
+- Uses known model context windows instead of a fixed 128K-token / 175 KB text cap.
+- Reserves output space and compacts when the selected model needs it.
+- Shows current model context occupancy in tokens, marking local estimates.
+- Reads streamed provider HTTP errors correctly in Firefox, allowing one automatic compact/retry after a context rejection.
+- Keeps full local conversation history and avoids replaying completed tools.
+- Includes a local tokenizer; no remote code or tokenizer download.
+
+No new permissions or data collection. The existing onboarding, 34 bundled website skills, logo and screenshots are preserved.

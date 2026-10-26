@@ -8,7 +8,7 @@ streaming adapted to Firefox. MIT licensed.
 ## Install
 
 [Get xgoose on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/xgoose/).
-The new 0.3.1 Firefox version requires **Firefox 153 or later** on desktop and Android.
+Firefox 0.3.2 requires **Firefox 153 or later** on desktop and Android.
 It uses document-scoped script injection and `userScripts.execute`, introduced in
 Firefox 153. Until Mozilla publishes this update, the store may offer the older release.
 
@@ -27,6 +27,9 @@ Firefox 153. Until Mozilla publishes this update, the store may offer the older 
 
 - Floating chat with streaming responses, source links, local history and automatic
   context compaction. Attach up to three images per message.
+- Model-sized context windows replace the fixed 128K/175 KB caps. Context occupancy
+  uses a local token estimate, reserves output space and compacts when necessary.
+  Provider limits remain authoritative, including lower custom-endpoint limits.
 - 34 packaged website skills, including Reddit, Hacker News, Discourse, Weibo,
   V2EX, NGA, LinkedIn, Substack, X, Zhihu and travel research sites.
 - Install, inspect, edit, disable, remove and explicitly update website scripts.
@@ -68,7 +71,8 @@ Run the real Firefox regression suite with Firefox 153+ installed:
 FIREFOX_BINARY=/path/to/firefox npm run e2e
 ```
 
-The suite uses an isolated temporary Firefox profile, a synthetic local AI provider,
+The suite verifies large-model input above 128K, small-model compaction, automatic
+context-rejection recovery, and the model-specific Context meter. It uses an isolated temporary Firefox profile, a synthetic local AI provider,
 and Selenium. It verifies page reading, streamed replies, built-in skill injection
 without optional scripts, Firefox's permission prompt, and document-scoped custom
 execution. It uses no user account or paid AI requests. Screenshots/reports are saved

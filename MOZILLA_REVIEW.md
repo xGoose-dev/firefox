@@ -1,4 +1,4 @@
-# Mozilla reviewer instructions — xgoose 0.3.1 for Firefox
+# Mozilla reviewer instructions — xgoose 0.3.2 for Firefox
 
 This is an update of the existing listed extension `xgoose@uscard.dev`.
 Public source: https://github.com/xGoose-dev/firefox
@@ -78,3 +78,32 @@ readers. User-owned strings in account cards are escaped; Markdown uses the
 existing sanitizer. Discourse HTML is parsed in disconnected DOM elements for
 text extraction. The source is included here for review. No obfuscated code or
 remote libraries are loaded.
+
+
+## 0.3.2 context-window update
+
+Ports the model-sized context policy from xgoose Chrome commit
+283fd9cdef96ebc98b4b1cad8c715cb73a90f7a1. Removes the common 128K token /
+175 KB text trigger. Known models use their own capacities; unknown models keep
+a conservative fallback. The agent reserves 4,096 output tokens plus input
+headroom, and respects lower gateway token/byte response limits. Provider context
+errors trigger one compaction/retry before any assistant output is committed.
+Full local history is retained; completed tools are not replayed.
+
+The Context meter displays current model occupancy in tokens, with local estimates
+marked as estimates. The MIT-licensed gpt-tokenizer 4.1.0 o200k_base vocabulary
+is bundled locally; there is no remote executable code or tokenizer download.
+The build removes whitespace and simplifies syntax in content.js to stay below
+AMO's JavaScript parser limit, while preserving identifiers. Complete original
+TypeScript and the exact package-lock.json are included for review/rebuilding.
+No new permissions or data collection. Existing logo and six gallery images stay
+unchanged. Default model selection is outside this context-only update.
+
+Regression tests include an approximately 800K-token synthetic core input and
+real Firefox input above 128K, smaller-model automatic compaction and gateway
+rejection/retry. These use only local synthetic providers, with no paid AI calls.
+
+The Firefox transport also consumes streamed HTTP error bodies directly instead
+of rejecting .text()/.json(). This allows the provider SDK and Hosted error
+normalizer to read context rejection codes and apply the bounded retry policy.
+Successful SSE responses continue streaming through the original body reader.

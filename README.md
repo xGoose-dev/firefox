@@ -8,7 +8,7 @@ streaming adapted to Firefox. MIT licensed.
 ## Install
 
 [Get xgoose on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/xgoose/).
-Firefox 0.3.2 requires **Firefox 153 or later** on desktop and Android.
+Firefox 0.3.3 requires **Firefox 153 or later** on desktop and Android.
 It uses document-scoped script injection and `userScripts.execute`, introduced in
 Firefox 153. Until Mozilla publishes this update, the store may offer the older release.
 
@@ -30,6 +30,8 @@ Firefox 153. Until Mozilla publishes this update, the store may offer the older 
 - Model-sized context windows replace the fixed 128K/175 KB caps. Context occupancy
   uses a local token estimate, reserves output space and compacts when necessary.
   Provider limits remain authoritative, including lower custom-endpoint limits.
+  Compaction batches scale with available token and transport capacity, with a
+  1.2 MB ceiling and an extra token check before each summary request.
 - 34 packaged website skills, including Reddit, Hacker News, Discourse, Weibo,
   V2EX, NGA, LinkedIn, Substack, X, Zhihu and travel research sites.
 - Install, inspect, edit, disable, remove and explicitly update website scripts.

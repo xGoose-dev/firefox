@@ -1,4 +1,4 @@
-# Mozilla reviewer instructions — xgoose 0.3.2 for Firefox
+# Mozilla reviewer instructions — xgoose 0.3.3 for Firefox
 
 This is an update of the existing listed extension `xgoose@uscard.dev`.
 Public source: https://github.com/xGoose-dev/firefox
@@ -107,3 +107,19 @@ The Firefox transport also consumes streamed HTTP error bodies directly instead
 of rejecting .text()/.json(). This allows the provider SDK and Hosted error
 normalizer to read context rejection codes and apply the bounded retry policy.
 Successful SSE responses continue streaming through the original body reader.
+
+
+## 0.3.3 compaction batch update
+
+Ports Chrome commit 6a5ab4f6905db8d8d2c719ae92d03a00313a986e. Summary
+batches no longer have a common 60 KB ceiling. The candidate size scales with
+remaining token capacity and the gateway byte budget, bounded by 1,200,000 bytes
+and 30% of the transport budget. Dense text is token-counted and split again
+before dispatch if necessary. Goal text is bounded too. Existing incomplete
+summary handling, image preservation and non-replay semantics remain.
+
+A new synthetic regression compacts roughly 1.62 MB of history in two summary
+calls, each complete request below 1.22 MB. Another test constrains complete
+requests below a 40 KB gateway budget despite Unicode, quotes and escapes.
+The local tokenizer's MIT copyright/license is included in the extension at
+third-party-notices.txt. No new permissions, remote code or data collection.

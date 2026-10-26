@@ -58,3 +58,14 @@ read-page, streaming, built-in skills, native permission and custom script check
 Core is marked side-effect free so unused agent/tokenizer code is removed from
 Settings and onboarding. Existing permission checks wait for script initialization
 and the actual native checkbox before interacting.
+
+
+## Firefox 0.3.3 — adaptive compaction batches (October 26, 2026)
+
+0.3.2 retained the old 60 KB summary chunk ceiling. Port Chrome commit 6a5ab4f
+to let summary batches scale with the available model input and gateway byte
+budget. A 1.2 MB maximum, a transport fraction, and pre-dispatch token checks
+keep individual calls bounded; dense candidates split again when necessary.
+The new 1.62 MB history regression needs two summaries, while lower-gateway
+regressions still respect their byte limits. Full local history and completed
+actions remain protected. Include tokenizer third-party notices in the package.

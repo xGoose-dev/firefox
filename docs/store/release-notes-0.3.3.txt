@@ -1,0 +1,5 @@
+Firefox 0.3.3 improves automatic context compaction.
+
+Summary batches now grow with the selected model's available context instead of keeping the old 60 KB ceiling. Batches remain bounded by token and request-size limits, with extra splitting for dense content. This avoids excessive summary calls during long conversations while preserving the original local history.
+
+Includes bundled tokenizer license notices. No new permissions or data collection.

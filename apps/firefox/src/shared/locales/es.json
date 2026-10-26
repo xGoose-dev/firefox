@@ -379,5 +379,8 @@
   "Firefox could not enable User Scripts. Try again; built-in skills are still available.": "Firefox no pudo habilitar los scripts. Reinténtalo; las skills integradas siguen disponibles.",
   "The sign-in email could not be sent. Check your connection and try again.": "No se pudo enviar el correo de acceso. Comprueba tu conexión y reinténtalo.",
   "Open a page on the website, then click the floating xgoose button or the Firefox toolbar icon and ask “Summarize this page with links to its sources.” Website sign-in is separate from your xgoose account.": "Abre una página, pulsa el botón flotante de xgoose o el icono de Firefox y pide «Resume esta página con enlaces a sus fuentes». El acceso al sitio web es independiente de xgoose.",
-  "Hosted AI sends your messages, page content and tool results to xgoose and stores conversation transcripts for 90 days. With your own provider, AI requests go to that provider and extension chat history stays local.": "La IA alojada envía mensajes, contenido de páginas y resultados a xgoose y guarda las conversaciones durante 90 días. Con tu proveedor, las solicitudes se envían a ese proveedor y el historial de la extensión permanece local."
+  "Hosted AI sends your messages, page content and tool results to xgoose and stores conversation transcripts for 90 days. With your own provider, AI requests go to that provider and extension chat history stays local.": "La IA alojada envía mensajes, contenido de páginas y resultados a xgoose y guarda las conversaciones durante 90 días. Con tu proveedor, las solicitudes se envían a ese proveedor y el historial de la extensión permanece local.",
+  "Use Hosted AI": "Usar IA alojada",
+  "Hosted AI & account": "IA alojada y cuenta",
+  "xgoose Hosted AI · account credit": "IA alojada de xgoose · saldo de cuenta"
 }

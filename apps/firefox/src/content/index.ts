@@ -89,9 +89,14 @@ async function bootstrap(): Promise<void> {
   // Install the page-controller's bridge-loader adapter before any tool
   // can dispatch `callBridge`. Idempotent; safe to call multiple times.
   installBridgeLoader(chromeBridgeLoader);
-  installPageExecutor((op, payload) => op === "exec"
-    ? send("sw:page_exec", payload)
-    : send("sw:page_abort", { execId: typeof payload === "string" ? payload : payload.execId }));
+  installPageExecutor(async (op, payload) => {
+    try { return op === "exec" ? await send("sw:page_exec", payload)
+      : await send("sw:page_abort", {execId:typeof payload === "string" ? payload : payload.execId}); }
+    catch (error) {
+      if (/user.?scripts/i.test(String(error))) window.dispatchEvent(new Event("xgoose:user-scripts-required"));
+      throw error;
+    }
+  });
   installOneClickSkillLinks();
 
   await loadAll();

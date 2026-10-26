@@ -574,6 +574,9 @@ function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   });
 
   // Local settings are usable independently of account, consent and catalog requests.
+  if (new URL(location.href).searchParams.get('connection') === 'byok' && connectionModeEl.value !== 'byok') {
+    connectionModeEl.value='byok';connectionModeEl.dispatchEvent(new Event('change'));
+  }
   for (const section of document.querySelectorAll<HTMLElement>("[data-settings-loading]")) {
     section.inert = false;
     section.removeAttribute("data-settings-loading");

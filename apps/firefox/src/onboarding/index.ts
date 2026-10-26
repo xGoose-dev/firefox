@@ -68,6 +68,7 @@ async function refreshConnection() {
     const settings=SettingsSchema.parse(saved['xgoose.settings']??{});
     if(generation!==connectionGeneration)return;
     if(settings.provider!=='xgoose-hosted') {
+      document.querySelector<HTMLDetailsElement>('#hostedSignIn')!.open=false;
       const configured=!!getProviderApiKey(settings);
       status.textContent=configured?'Your own provider is configured. Open a website to try your first conversation.':'Connect your API key in Settings, then return here to try a website.';
       next.hidden=!configured;return;

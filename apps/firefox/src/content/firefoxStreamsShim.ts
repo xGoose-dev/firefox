@@ -184,6 +184,53 @@ class SandboxTextDecoderStream extends PonyTransformStream<
   }
 }
 
+// Native URLSearchParams iterators cross Firefox's Xray realm boundary too.
+// Keep the native URL parser and live parameter storage; expose JS iterators.
+const NativeURL=URL;
+const NativeURLSearchParams=URLSearchParams;
+class SandboxURLSearchParams implements URLSearchParams {
+  private native: URLSearchParams;
+  constructor(init?: string | string[][] | Record<string,string> | URLSearchParams, native?: URLSearchParams) {
+    this.native=native??new NativeURLSearchParams(init instanceof SandboxURLSearchParams?init.toString():init);
+  }
+  get size(){return this.native.size;}
+  append(name:string,value:string){this.native.append(name,value);}
+  delete(name:string,value?:string){this.native.delete(name,value);}
+  get(name:string){return this.native.get(name);}
+  getAll(name:string){const result:string[]=[];this.native.forEach((value,key)=>{if(key===name)result.push(value);});return result;}
+  has(name:string,value?:string){return this.native.has(name,value);}
+  set(name:string,value:string){this.native.set(name,value);}
+  sort(){this.native.sort();}
+  toString(){return this.native.toString();}
+  forEach(callback:(value:string,key:string,parent:URLSearchParams)=>void,thisArg?:any){this.native.forEach((value,key)=>callback.call(thisArg,value,key,this));}
+  *entries():URLSearchParamsIterator<[string,string]>{const rows:[string,string][]=[];this.native.forEach((v,k)=>rows.push([k,v]));yield* rows;}
+  *keys():URLSearchParamsIterator<string>{for(const [k] of this.entries())yield k;}
+  *values():URLSearchParamsIterator<string>{for(const [,v] of this.entries())yield v;}
+  [Symbol.iterator](){return this.entries();}
+}
+class SandboxURL implements URL {
+  private native:URL;
+  constructor(value:string|URL,base?:string|URL){this.native=new NativeURL(String(value),base===undefined?undefined:String(base));}
+  get href(){return this.native.href;} set href(v:string){this.native.href=v;}
+  get origin(){return this.native.origin;}
+  get protocol(){return this.native.protocol;} set protocol(v:string){this.native.protocol=v;}
+  get username(){return this.native.username;} set username(v:string){this.native.username=v;}
+  get password(){return this.native.password;} set password(v:string){this.native.password=v;}
+  get host(){return this.native.host;} set host(v:string){this.native.host=v;}
+  get hostname(){return this.native.hostname;} set hostname(v:string){this.native.hostname=v;}
+  get port(){return this.native.port;} set port(v:string){this.native.port=v;}
+  get pathname(){return this.native.pathname;} set pathname(v:string){this.native.pathname=v;}
+  get search(){return this.native.search;} set search(v:string){this.native.search=v;}
+  get hash(){return this.native.hash;} set hash(v:string){this.native.hash=v;}
+  get searchParams():URLSearchParams{return new SandboxURLSearchParams(undefined,this.native.searchParams);}
+  toString(){return this.native.href;}
+  toJSON(){return this.native.href;}
+  static canParse(value:string,base?:string){return NativeURL.canParse(value,base);}
+  static parse(value:string,base?:string){try{return new SandboxURL(value,base);}catch{return null;}}
+  static createObjectURL(value:Blob|MediaSource){return NativeURL.createObjectURL(value);}
+  static revokeObjectURL(value:string){NativeURL.revokeObjectURL(value);}
+}
+
 function installFirefoxStreamsShim(): void {
   const g = globalThis as FlaggedGlobal;
   if (g[PATCH_FLAG]) return;
@@ -193,14 +240,11 @@ function installFirefoxStreamsShim(): void {
   // Firefox options / popup page (extension-realm, not content-script
   // realm) the native WebIDL streams work fine, so we leave them
   // alone there.
-  const isFirefoxContentScript = !!(
-    window as unknown as { wrappedJSObject?: unknown }
-  ).wrappedJSObject;
-  if (!isFirefoxContentScript) {
-    g[PATCH_FLAG] = true;
-    return;
-  }
-  console.info("[xgoose-fx-shim] installing pure-JS Streams polyfill");
+  // This module is imported only by the isolated content entry, never by
+  // extension pages or MAIN-world bundles. Install directly in that realm.
+  console.info("[xgoose-fx-shim] installing same-realm Web API adapters");
+  Object.defineProperty(g,"URL",{value:SandboxURL,writable:true,configurable:true});
+  Object.defineProperty(g,"URLSearchParams",{value:SandboxURLSearchParams,writable:true,configurable:true});
   Object.defineProperty(g, "TransformStream", {
     value: PonyTransformStream,
     writable: true,

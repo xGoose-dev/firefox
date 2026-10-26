@@ -10,9 +10,7 @@
     "build:skills": "node scripts/build-skills.mjs",
     "dev": "node scripts/build.mjs --watch",
     "typecheck": "tsc --noEmit",
-    "e2e": "node scripts/e2e.mjs",
-    "e2e:sites": "node scripts/e2e-sites.mjs",
-    "e2e:dynamic": "node scripts/e2e-dynamic-skill.mjs"
+    "e2e": "cd ../.. && npm run e2e"
   },
   "dependencies": {
     "@xgoose/core": "0.2.0",

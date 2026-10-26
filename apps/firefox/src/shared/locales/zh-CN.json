@@ -379,5 +379,8 @@
   "Firefox could not enable User Scripts. Try again; built-in skills are still available.": "Firefox 无法启用用户脚本，请重试。内置技能仍可使用。",
   "The sign-in email could not be sent. Check your connection and try again.": "无法发送登录邮件。请检查网络后重试。",
   "Open a page on the website, then click the floating xgoose button or the Firefox toolbar icon and ask “Summarize this page with links to its sources.” Website sign-in is separate from your xgoose account.": "打开目标网站页面，点击 xgoose 悬浮按钮或 Firefox 工具栏图标，然后输入“总结此页，并附上来源链接”。网站登录与 xgoose 账户相互独立。",
-  "Hosted AI sends your messages, page content and tool results to xgoose and stores conversation transcripts for 90 days. With your own provider, AI requests go to that provider and extension chat history stays local.": "托管 AI 会将消息、页面内容和工具结果发送至 xgoose，并保留对话记录 90 天。使用自己的服务商时，AI 请求发送到所选服务商，插件聊天记录保留在本地。"
+  "Hosted AI sends your messages, page content and tool results to xgoose and stores conversation transcripts for 90 days. With your own provider, AI requests go to that provider and extension chat history stays local.": "托管 AI 会将消息、页面内容和工具结果发送至 xgoose，并保留对话记录 90 天。使用自己的服务商时，AI 请求发送到所选服务商，插件聊天记录保留在本地。",
+  "Use Hosted AI": "使用托管 AI",
+  "Hosted AI & account": "托管 AI 与账户",
+  "xgoose Hosted AI · account credit": "xgoose 托管 AI · 账户额度"
 }

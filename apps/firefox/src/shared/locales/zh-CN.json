@@ -382,5 +382,6 @@
   "Hosted AI sends your messages, page content and tool results to xgoose and stores conversation transcripts for 90 days. With your own provider, AI requests go to that provider and extension chat history stays local.": "托管 AI 会将消息、页面内容和工具结果发送至 xgoose，并保留对话记录 90 天。使用自己的服务商时，AI 请求发送到所选服务商，插件聊天记录保留在本地。",
   "Use Hosted AI": "使用托管 AI",
   "Hosted AI & account": "托管 AI 与账户",
-  "xgoose Hosted AI · account credit": "xgoose 托管 AI · 账户额度"
+  "xgoose Hosted AI · account credit": "xgoose 托管 AI · 账户额度",
+  "In Firefox’s prompt, select Allow user scripts, then click Allow.": "在 Firefox 提示中勾选“允许运行用户脚本”，然后点击“允许”。"
 }

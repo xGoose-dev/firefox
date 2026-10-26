@@ -24,7 +24,6 @@ await mkdir('artifacts/firefox-e2e',{recursive:true});
 const binary=process.env.FIREFOX_BINARY||(existsSync('artifacts/firefox-runtime/Firefox.app')?resolve('artifacts/firefox-runtime/Firefox.app/Contents/MacOS/firefox'):undefined);
 const options=new firefox.Options().addArguments('-headless');if(binary)options.setBinary(binary);
 options.setPreference('extensions.webextensions.warnings-as-errors',false);
-options.setPreference('security.dialog_enable_delay',0);
 let driver;
 try{
  execFileSync('python3',['-c',`from pathlib import Path\nimport zipfile\nr=Path('apps/firefox/dist')\nwith zipfile.ZipFile('artifacts/firefox-test.zip','w',zipfile.ZIP_DEFLATED) as z:\n for p in r.rglob('*'):\n  if p.is_file(): z.write(p,p.relative_to(r))`]);
@@ -94,9 +93,10 @@ try{
  await driver.findElement(By.id('openExtensions')).click();
  // Approve the prompt in this isolated automation profile only.
  await driver.setContext(firefox.Context.CHROME);
- console.log('native panel',JSON.stringify(await driver.executeScript(`return {html:PopupNotifications.panel.outerHTML.slice(0,12000),state:PopupNotifications.panel.state}`)));
+
  await driver.wait(async()=>driver.executeScript(`return !!document.getElementById('addon-webext-permissions-notification')`),10000);
- const prompt=await driver.executeScript(`const n=document.getElementById('addon-webext-permissions-notification');return {text:n?.textContent,button:n?.button?.label,checks:[...n.querySelectorAll('checkbox,input')].map(e=>({id:e.id,label:e.label,checked:e.checked,hidden:e.hidden}))};`);console.log('permission prompt',JSON.stringify(prompt));assert.ok(prompt);
+ const prompt=await driver.executeScript(`const n=document.getElementById('addon-webext-permissions-notification');const checkbox=n.querySelector('moz-checkbox');return {text:n.textContent,hasScriptCheckbox:!!checkbox};`);assert.equal(prompt.hasScriptCheckbox,true);
+ await driver.executeScript(`const c=document.getElementById('addon-webext-permissions-notification').querySelector('moz-checkbox');c.shadowRoot.querySelector('input[type="checkbox"]').click();`);
  await driver.wait(async()=>driver.executeScript(`return !document.getElementById('addon-webext-permissions-notification')?.button?.disabled`),10000,'permission button remained disabled');
  await driver.executeScript(`const n=document.getElementById('addon-webext-permissions-notification');n.button.click();`);
  await driver.setContext(firefox.Context.CONTENT);

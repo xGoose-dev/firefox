@@ -38,8 +38,8 @@ profile and a localhost-only AI fixture. See `tests/browser/firefox.mjs`.
 On a normal installation, Getting started explains both routes and connection
 readiness. Open Hacker News or another supported website to inspect packaged
 skill functions; no optional User Scripts permission is needed for them. Click
-Enable User Scripts in Settings/Getting started to approve the optional permission
-for explicitly installed community scripts, edited skills and custom page actions.
+Enable User Scripts in Settings/Getting started and select Allow user scripts in Firefox’s prompt before clicking Allow. This
+optional permission is used for explicitly installed community scripts, edited skills and custom page actions.
 Installed scripts and their source can be inspected, disabled and deleted in Settings.
 Online skill updates require the user's explicit action.
 

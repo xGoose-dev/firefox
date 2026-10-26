@@ -382,5 +382,6 @@
   "Hosted AI sends your messages, page content and tool results to xgoose and stores conversation transcripts for 90 days. With your own provider, AI requests go to that provider and extension chat history stays local.": "La IA alojada envía mensajes, contenido de páginas y resultados a xgoose y guarda las conversaciones durante 90 días. Con tu proveedor, las solicitudes se envían a ese proveedor y el historial de la extensión permanece local.",
   "Use Hosted AI": "Usar IA alojada",
   "Hosted AI & account": "IA alojada y cuenta",
-  "xgoose Hosted AI · account credit": "IA alojada de xgoose · saldo de cuenta"
+  "xgoose Hosted AI · account credit": "IA alojada de xgoose · saldo de cuenta",
+  "In Firefox’s prompt, select Allow user scripts, then click Allow.": "En el aviso de Firefox, marca Permitir scripts de usuario y pulsa Permitir."
 }

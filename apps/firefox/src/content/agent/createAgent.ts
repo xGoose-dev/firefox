@@ -75,6 +75,7 @@ async function projectToCoreSettings(s: Settings): Promise<{
   model: string;
   baseUrl: string;
   thinking: boolean;
+  contextWindowTokens?: number;
   hostedAccountId?:string;
 }> {
   if (s.provider !== "xgoose-hosted") {
@@ -106,5 +107,6 @@ async function projectToCoreSettings(s: Settings): Promise<{
     model,
     baseUrl: XGOOSE_HOSTED_AI_BASE_URL,
     thinking: false,
+    ...(contextWindowTokens ? {contextWindowTokens} : {}),
   };
 }

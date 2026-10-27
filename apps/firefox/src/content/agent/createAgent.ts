@@ -1,4 +1,5 @@
 import { normalizeHostedError } from "@/shared/hosted";
+import {resolveHostedModel} from "@/shared/hostedModels";
 // Chrome host wrapper around `@xgoose/core`'s `createAgent`. Composes the
 // core agent, the page-controller DOM tools, and the host-specific skill
 // tools (list_skills, skill_call, etc.) so content/index.ts can spin up
@@ -74,6 +75,7 @@ async function projectToCoreSettings(s: Settings): Promise<{
   model: string;
   baseUrl: string;
   thinking: boolean;
+  contextWindowTokens?: number;
   hostedAccountId?:string;
 }> {
   if (s.provider !== "xgoose-hosted") {
@@ -93,12 +95,18 @@ async function projectToCoreSettings(s: Settings): Promise<{
       "xgoose hosted AI requires you to sign in. Open the options page and sign in via xgoose.org, or pick a different provider.",
     );
   }
+  // Model metadata comes from the signed-in gateway, so a future Hosted model
+  // need not fall back to the bundled catalogue's conservative unknown window.
+  const catalogue=await send('sw:list_xgoose_models',{}).catch(()=>null);
+  const model=resolveHostedModel(s.model,catalogue?.ok?catalogue:null);
+  const contextWindowTokens=catalogue?.ok?catalogue.contextWindows?.[model]:undefined;
   return {
     provider: "openai-compat",
     apiKey: "hosted-session-managed",
     hostedAccountId:account.user.id,
-    model: s.model,
+    model,
     baseUrl: XGOOSE_HOSTED_AI_BASE_URL,
     thinking: false,
+    ...(contextWindowTokens ? {contextWindowTokens} : {}),
   };
 }

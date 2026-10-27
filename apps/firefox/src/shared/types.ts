@@ -1,4 +1,5 @@
 import { z } from "zod";
+import {HOSTED_DEFAULT_CHOICE} from "./hostedModels";
 import {
   ProviderSchema as CoreProviderSchema,
   type Provider as CoreProvider,
@@ -56,7 +57,7 @@ export const SettingsSchema = z.object({
   apiKeys: z.record(z.string(), z.string()).default({}),
   baseUrls: z.record(z.string(), z.string()).default({}),
   apiKey: z.string().default(""),
-  model: z.string().default("luna"),
+  model: z.string().default(HOSTED_DEFAULT_CHOICE),
   baseUrl: z.string().default(""),
   thinking: z.boolean().default(false),
   theme: ThemeSchema.default("system"),
@@ -225,6 +226,8 @@ export type UserSkill = z.infer<typeof UserSkillSchema>;
 
 export type StoredConversation = {
   modelContext?: any[];
+  /** Number of leading `messages` that `modelContext` already represents. */
+  modelContextCovers?: number;
   id: string;
   origin: string;
   title: string;

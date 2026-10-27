@@ -164,7 +164,7 @@ export type MessageMap = {
   "sw:list_xgoose_models": {
     request: { refresh?: boolean };
     response:
-      | { ok: true; models: string[] }
+      | { ok: true; models: string[]; defaultModel?: string; contextWindows?: Record<string,number> }
       | { ok: false; error: string; signedIn: boolean };
   };
 

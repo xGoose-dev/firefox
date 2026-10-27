@@ -67,6 +67,7 @@ import {
 } from "./state";
 import { createAgent } from "./agent/createAgent";
 import {
+  boundedModelText,
   buildSystemReminder,
   clearTodos,
   costsFor,
@@ -77,6 +78,7 @@ import {
   subscribeTodos,
   type ConversationUsage,
   type TodoItem,
+  websiteEvidence,
 } from "@xgoose/core";
 
 // The build injects Firefox’s Promise-based browser API alias.
@@ -739,7 +741,7 @@ async function bootstrap(): Promise<void> {
       }
 
       const baseReminder = buildSystemReminder({
-        skillInvocation: "structured",
+        ...(!scriptsEnabled ? {skillInvocation: "structured" as const} : {}),
         pageUrl: getCurrentPageUrl(),
         pageTitle: getCurrentPageTitle(),
         activeSkills: skillsForReminder,
@@ -750,9 +752,8 @@ async function bootstrap(): Promise<void> {
       const reminder =
         baseReminder +
         languageReminder(settings.answerLanguage) +
-        "\n# Firefox skill execution\nUse skill_call({skill,function,args}) for all website skill calls. This structured tool works for bundled skills without the optional User Scripts permission. Examples using xgoose.skills.ns.fn(args) describe the same function and arguments; translate them to skill_call instead of js_exec. Raw js_exec requires the optional User Scripts permission.\n" +
-        (scriptsEnabled?"":userScriptsReminder(chrome.runtime.id,builtinSite))+
-        sourceGroundedToolUseReminder(prompt, skillsForReminder.length > 0);
+        (scriptsEnabled ? "\n# Firefox skill execution\nThe User Scripts permission is granted. js_exec works like a CLI over this page: call skills with `await xgoose.skills.<ns>.<fn>(args)`, chain and paginate, filter and aggregate in code, and return what the answer needs. skill_call still runs single skill functions.\n" : "\n# Firefox skill execution\nUse skill_call({skill,function,args}) for website skill calls. This structured tool works for bundled skills without the optional User Scripts permission. Examples using xgoose.skills.ns.fn(args) describe the same function and arguments; translate them to skill_call. js_exec requires the optional User Scripts permission.\n") +
+        (scriptsEnabled?"":userScriptsReminder(chrome.runtime.id,builtinSite));
 
       // Heal any orphaned tool-call / tool-result parts that survived from a
       // previous navigation-interrupted turn. Without this, the AI SDK's
@@ -1122,24 +1123,6 @@ async function bootstrap(): Promise<void> {
     return isHostedAuthStopped(msg)?translate(HOSTED_AUTH_STOPPED):msg.slice(0, 1000);
   }
 
-  function sourceGroundedToolUseReminder(
-    prompt: string,
-    hasActiveSkills: boolean,
-  ): string {
-    if (!hasActiveSkills) return "";
-    if (!/(美卡论坛|论坛|帖子|DP|data point|搜索|结合|根据当前|当前页面)/i.test(prompt)) {
-      return "";
-    }
-    return (
-      "\n\n# Per-turn source-grounding requirement\n" +
-      "This user request explicitly asks for forum/site-grounded information. " +
-      "You MUST make at least one tool call before answering. Because active " +
-      "skills are available on this page, use `skill_call` for the relevant " +
-      "helper (or `read_page` for current-page-only summaries). " +
-      "Answer from the information actually available; useful partial results " +
-      "are welcome. State limited coverage briefly instead of requiring exhaustive verification."
-    );
-  }
 
   // Claude-Code-style send-or-queue. While the agent is mid-turn, any
   // prompt the user submits is appended to `queuedMessages` and shown as a
@@ -1192,20 +1175,14 @@ async function bootstrap(): Promise<void> {
         args: [],
         timeoutMs: getSettings().jsExecTimeoutMs,
         execId: Math.random().toString(36).slice(2, 12),
-      })) as { ok: boolean; result?: unknown; error?: string };
+      })) as { ok: boolean; result?: unknown; resultId?: string; error?: string };
       resultText = res.ok
-        ? JSON.stringify(res.result ?? null)
+        ? boundedModelText(res.result, JSON.stringify(websiteEvidence(res.result ?? null, location.origin)), { id: res.resultId, pageHandle: true })
         : `ERROR: ${res.error ?? "exec failed"}`;
     } catch (e: any) {
       resultText = `ERROR: ${e?.message ?? String(e)}`;
     } finally {
       panel.setLoadingStatus(null);
-    }
-    // Thread shortcuts may include hundreds of floors; the old 8K cut
-    // discarded the latest posts. Bound UTF-8 bytes for the Hosted request cap.
-    const actionBytes = new TextEncoder().encode(resultText);
-    if (actionBytes.length > 140000) {
-      resultText = new TextDecoder().decode(actionBytes.slice(0, 140000)) + "…(truncated; do not claim complete coverage)";
     }
     const composed =
       `${action.prompt}\n\n` +

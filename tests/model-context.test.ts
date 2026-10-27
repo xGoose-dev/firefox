@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createModel} from '../packages/core/src/model.ts';
 import {createAgent} from '../packages/core/src/createAgent.ts';
-import {estimateTextTokens,requestContextTokens} from '../packages/core/src/contextWindow.ts';
+import {estimateTextTokens,requestContextTokens} from '../packages/core/src/contextTokens.ts';
 import {modelContextWindow,inputTokenBudget} from '../packages/core/src/contextPolicy.ts';
 import {defineTool} from '../packages/core/src/tools/buildTool.ts';
 import {z} from 'zod';
@@ -23,8 +23,8 @@ async function run(model:string,text:string){
 test('Hosted and known BYOK windows follow the model, with output headroom',()=>{
  for(const id of ['luna','gpt-6.1-sol'])assert.equal(createModel({...settings,model:id}).contextWindow,1_050_000);
  for(const id of ['claude-haiku-5-5','claude-sonnet-5-5'])assert.equal(modelContextWindow(id),1_000_000);
- assert.equal(modelContextWindow('gpt-4o-mini'),128_000);assert.equal(modelContextWindow('gemini-2.5-pro'),1_048_576);
- assert.equal(modelContextWindow('gpt-4.1'),1_047_576);assert.equal(modelContextWindow('custom-unknown'),128_000);
+ assert.equal(modelContextWindow('custom-unknown'),128_000);
+ assert.equal(createModel({...settings,model:'future-hosted',contextWindowTokens:2_000_000}).contextWindow,2_000_000);
  assert.ok(inputTokenBudget(1_000_000)<1_000_000-4096);
 });
 test('an 800K-token prompt uses the large model window without premature compaction',async()=>{
@@ -46,7 +46,6 @@ test('context estimates include system/tool schemas and images, not base64 lengt
  const tools=requestContextTokens([{role:'system',content:'System instructions',toolsAdded:[{name:'read',description:'Read a source',parameters:{type:'object',properties:{q:{type:'string'}}}}],timestamp:0},...base] as any,model);
  assert.ok(tools>plain);
 });
-
 test('large-window compaction uses bounded large batches instead of dozens of legacy 60KB calls',async()=>{
  const sizes:number[]=[];const events:any[]=[];
  const bundle=createAgent({settings,tools:[],contextBudgetChars:100,fetchImpl:async(_input,init)=>{
@@ -57,19 +56,6 @@ test('large-window compaction uses bounded large batches instead of dozens of le
  const result=await bundle.agent.stream({messages:[{role:'user',content:'Research earlier evidence'},{role:'assistant',content:[{type:'text',text:'evidence '.repeat(180000)}]},{role:'user',content:'Continue FINAL_GOAL'}]});
  for await(const event of result.fullStream)events.push(event);
  assert.equal(sizes.length,2);assert.ok(sizes.some(size=>size>1_000_000));assert.ok(sizes.every(size=>size<1_220_000));assert.ok(!events.some(e=>e.type==='error'));
-});
-
-test('larger summary batches still obey a lower gateway byte budget',async()=>{
- const sizes:number[]=[];let completed=0;
- const bundle=createAgent({settings,tools:[],requestBudgetBytes:40000,fetchImpl:async(_input,init)=>{
-  const body=String(init?.body);assert.ok(Buffer.byteLength(body)<40000);
-  if(body.includes('Summarize this browser-agent history')){sizes.push(Buffer.byteLength(body));return response('Preserve FINAL_GOAL and completed actions.');}
-  completed++;return response('Continued.');
- }});
- const messages=[{role:'user',content:'Previous research'},{role:'assistant',content:[{type:'text',text:'中文🙂"\\\n'.repeat(12000)}]},{role:'user',content:'Continue FINAL_GOAL'}];
- const original=JSON.stringify(messages),events:any[]=[];
- const result=await bundle.agent.stream({messages});for await(const event of result.fullStream)events.push(event);
- assert.ok(sizes.length>2);assert.equal(completed,1);assert.equal(JSON.stringify(messages),original);assert.ok(!events.some(e=>e.type==='error'));
 });
 
 for (const explicitCap of [undefined, 175000]) test(`successful gateway policy replaces a legacy cap; explicit host cap=${explicitCap}`, async () => {

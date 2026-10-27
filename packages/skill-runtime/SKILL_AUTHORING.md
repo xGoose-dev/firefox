@@ -1,6 +1,6 @@
 # Skill authoring guide — single-file `.xgs.js` standard
 
-Canonical reference for the xgoose skill format. One file = one skill: a Tampermonkey-style `// ==XGooseSkill== … // ==/XGooseSkill==` header at the top, ES-module body underneath, distributed as `<name>.xgs.js`. Drop the file into any host extension (`xgoose-extension-firefox`, `xgoose-extension-safari`, …); the runtime parses the header, gates on `@match` + `@detect`, bundles the body, and assigns the module's `default` export onto `window.xgoose.skills.<namespace>`.
+Canonical reference for the xgoose skill format. One file = one skill: a Tampermonkey-style `// ==XGooseSkill== … // ==/XGooseSkill==` header at the top, ES-module body underneath, distributed as `<name>.xgs.js`. Drop the file into any host extension (`xgoose-extension-chrome`, `xgoose-extension-safari`, …); the runtime parses the header, gates on `@match` + `@detect`, bundles the body, and assigns the module's `default` export onto `window.xgoose.skills.<namespace>`.
 
 The `.xgs.js` extension is what each host extension watches for in the address bar: navigating to a raw skill URL pops the extension's install page automatically (the older `.user.js` extension collided with Tampermonkey / Violentmonkey, which hijacks any `*.user.js` navigation regardless of the header body).
 

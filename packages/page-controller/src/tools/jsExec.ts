@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { boundedModelText, defineTool, storeResult, websiteEvidence, type XgooseBuiltTool } from "@xgoose/core";
+import { boundedModelText, defineTool, detachResultImages, resultImageParts, storeResult, websiteEvidence, type XgooseBuiltTool } from "@xgoose/core";
 import { callBridge } from "../pageRpc";
 
 const DEFAULT_JS_EXEC_TIMEOUT_MS = 30_000;
@@ -22,6 +22,8 @@ export type JsExecToolDeps = {
   /** Host-supplied default timeout when `timeout_ms` isn't passed by the
    *  caller. Lets the host expose it as a setting. */
   getDefaultTimeoutMs(): number;
+  /** Turns image references the page cannot read itself into image values before they are detached. */
+  resolveResultImages?(result: unknown, signal?: AbortSignal): Promise<unknown>;
 };
 
 /**
@@ -135,8 +137,10 @@ export function createJsExecTool(deps: JsExecToolDeps): XgooseBuiltTool {
           })
         : await execPromise;
 
-      // Preserve the actual result for the local journal and consented transcript.
-      return res;
+      // Preserve the actual result for the local journal and consented transcript; image bytes go only to the model.
+      if (!res.ok) return res;
+      const result = deps.resolveResultImages ? await deps.resolveResultImages(res.result, signal) : res.result;
+      return { ...res, result: detachResultImages(result) };
 
     },
   });
@@ -149,5 +153,5 @@ export function jsExecModelOutput(output:unknown) {
   const shown=envelope?.ok?{...envelope,result:websiteEvidence(envelope.result,location.origin)}:output;
   if(id&&envelope?.ok)storeResult(id,envelope.result);
   const text=boundedModelText(envelope?.ok?envelope.result:output,safeJson(shown),{id,pageHandle:!!id});
-  return [{type:"text" as const,text}];
+  return [{type:"text" as const,text},...resultImageParts(envelope?.result)];
 }

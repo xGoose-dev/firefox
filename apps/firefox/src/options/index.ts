@@ -27,7 +27,7 @@ import {
 } from "@/shared/modelCatalog";
 import { onAccountChange } from "@/shared/account";
 import {mountAccountSection} from "@/shared/accountSection";
-import { track,failureReason } from "@/shared/analytics";
+import { track,failureReason,setAnalyticsActive } from "@/shared/analytics";
 
 const DEFAULT_MODEL_BY_PROVIDER: Record<Provider, string> = {
   ...CORE_DEFAULT_MODEL_BY_PROVIDER,
@@ -263,11 +263,12 @@ function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   analyticsEnabledEl.checked = settings.analyticsEnabled && await chrome.permissions.contains({data_collection:['technicalAndInteraction']} as any);
   analyticsEnabledEl.addEventListener('change', async () => {
     if (analyticsEnabledEl.checked) {
-      analyticsEnabledEl.checked = await chrome.permissions.request({data_collection:['technicalAndInteraction']} as any);
+      analyticsEnabledEl.checked = await chrome.permissions.request({data_collection:['technicalAndInteraction','locationInfo']} as any);
     }
   });
   updateProviderDependent(settings.provider);
 
+  setAnalyticsActive(true);
   track("options_page_opened", { provider: settings.provider });
 
   jsExecTimeoutMsEl.addEventListener("input", () => {

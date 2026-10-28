@@ -63,7 +63,8 @@ installSkillUpdateChecks();
 
 // Serialize claims across tabs so the brief skill notice appears only once per install.
 let noticeQueue = Promise.resolve(false);
-chrome.runtime.onInstalled.addListener(({reason}) => {
+chrome.runtime.onInstalled.addListener(async ({reason}) => {
+  if(reason === "install")await chrome.storage.local.set({"xgoose.analytics.installAt":Date.now()});
   if (reason === "install") void chrome.tabs.create({url:chrome.runtime.getURL("onboarding.html")});
 });
 
@@ -354,7 +355,7 @@ registerRouter({
   },
   // ── analytics ───────────────────────────────────────────────────────
   "sw:track": (payload) => {
-    recordEvent(payload.event, payload.params ?? {});
+    recordEvent(payload.event, payload.params ?? {},payload.device);
   },
 
   "sw:toggle_panel": async (_payload, sender) => {

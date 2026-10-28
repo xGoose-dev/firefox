@@ -168,7 +168,24 @@ try{
   await driver.close();await driver.switchTo().window(extensionHandle);
  }
  contextFixture=null;console.log('Firefox context windows and automatic recovery passed',JSON.stringify(contextResults));
- const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true};
+ // Synthetic transport fixture in the real Firefox event page. No Google calls.
+ await driver.switchTo().window(extensionHandle);
+ await driver.executeAsyncScript(`const done=arguments[arguments.length-1];(async()=>{
+  const bg=await browser.runtime.getBackgroundPage();
+  bg.analyticsFixture={requests:[],technical:true,location:false};
+  const original=bg.fetch.bind(bg),contains=bg.browser.permissions.contains.bind(bg.browser.permissions);
+  bg.browser.permissions.contains=opts=>opts.data_collection?Promise.resolve(opts.data_collection.every(type=>type==='technicalAndInteraction'?bg.analyticsFixture.technical:type==='locationInfo'?bg.analyticsFixture.location:false)):contains(opts);
+  bg.fetch=async(input,init)=>{const url=String(typeof input==='string'?input:input.url);if(url.startsWith('https://api.xgoose.org')){if(url.endsWith('/a/collect'))bg.analyticsFixture.requests.push(JSON.parse(init.body));return new bg.Response(null,{status:204});}return original(input,init);};
+  const data=await browser.storage.local.get('xgoose.settings');await browser.storage.local.set({'xgoose.settings':{...data['xgoose.settings'],analyticsEnabled:true}});
+  await browser.runtime.sendMessage({kind:'sw:track',payload:{event:'firefox_analytics_fixture',device:{language:'en',screen_resolution:'1440x900'},params:{engagement_time_msec:15000}}});
+  done(true);
+ })().catch(e=>done({error:String(e)}));`);
+ await driver.wait(()=>driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.getBackgroundPage().then(bg=>done(bg.analyticsFixture.requests.some(r=>r.events.some(e=>e.name==='firefox_analytics_fixture'))));`),20000);
+ const telemetry=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.getBackgroundPage().then(bg=>done(bg.analyticsFixture.requests.find(r=>r.events.some(e=>e.name==='firefox_analytics_fixture'))));`);
+ assert.equal(telemetry.identity_version,2);assert.equal(telemetry.location_consent,false);assert.equal(telemetry.device.screen_resolution,'1440x900');assert.equal(telemetry.events.find(e=>e.name==='firefox_analytics_fixture').params.engagement_time_msec,15000);
+ await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.getBackgroundPage().then(async bg=>{bg.analyticsFixture.technical=false;await browser.runtime.sendMessage({kind:'sw:track',payload:{event:'firefox_no_consent_fixture'}});setTimeout(()=>done(bg.analyticsFixture.requests.every(r=>r.events.every(e=>e.name!=='firefox_no_consent_fixture'))),1800);});`).then(value=>assert.equal(value,true));
+ console.log('Firefox analytics: real event-page forwarding, device metadata, engagement and consent gates passed');
+ const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,analyticsConsent:true,analyticsDevice:true};
  await writeFile('artifacts/firefox-e2e/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }catch(error){if(driver){try{await driver.setContext(firefox.Context.CONTENT);await writeFile('artifacts/firefox-e2e/failure.png',await driver.takeScreenshot(),'base64');console.error(await driver.executeScript("return (document.querySelector('#xgoose-root')?.shadowRoot?.querySelector('.msgs')?.textContent||document.body.innerText).slice(-1500)"));console.error('provider requests',requests.length);}catch{}}throw error;}
 finally{if(driver)await driver.quit();server.close();}

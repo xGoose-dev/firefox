@@ -11,6 +11,11 @@ let contextFixture=null;
 const server=createServer(async(req,res)=>{
  if(req.url.includes('/chat/completions')){
   let data='';for await(const b of req)data+=b;requests.push(JSON.parse(data));
+  const body=requests.at(-1);
+  if(body.model==='gpt-6-luna'&&(body.max_tokens!==undefined||!body.max_completion_tokens||body.reasoning_effort!=='none')){
+   res.writeHead(400,{'content-type':'application/json'});
+   res.end(JSON.stringify({error:{message:"Use max_completion_tokens and reasoning_effort none for Luna tool calls.",code:'unsupported_parameter'}}));return;
+  }
   if(contextFixture){
    const request=requests.at(-1),summary=data.includes('Summarize this browser-agent history');
    if(summary)contextFixture.summaries++;
@@ -58,7 +63,7 @@ try{
  await driver.wait(until.elementLocated(By.id('provider')),10000);
  const initial=await driver.executeAsyncScript(`const done=arguments[arguments.length-1]; Promise.all([browser.permissions.contains({permissions:['userScripts']}),browser.storage.local.get('xgoose.settings')]).then(([permission,data])=>done({permission,settings:data['xgoose.settings']}));`);
  assert.equal(initial.permission,false);
- await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.set({'xgoose.settings':{provider:'openai-compat',apiKeys:{'openai-compat':'synthetic-test'},baseUrls:{'openai-compat':arguments[0]},model:'fixture',analyticsEnabled:false,launcherVisibility:'always',language:'en'}}).then(()=>done(true),e=>done({error:e.message}));`,base);
+ await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.set({'xgoose.settings':{provider:'openai-compat',apiKeys:{'openai-compat':'synthetic-test'},baseUrls:{'openai-compat':arguments[0]},model:'gpt-6-luna',thinking:true,analyticsEnabled:false,launcherVisibility:'always',language:'en'}}).then(()=>done(true),e=>done({error:e.message}));`,base);
  const skills=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.sendMessage({kind:'sw:list_skills'}).then(done,e=>done({error:e.message}));`);assert.equal(skills.length,37);for(const name of ['amazon','reddit','tieba','wikipedia'])assert.ok(skills.some(s=>s.name===name),name);
  await writeFile('artifacts/firefox-e2e/options.png',await driver.takeScreenshot(),'base64');
  await driver.executeScript("location.href=arguments[0]",origin+'/onboarding.html');

@@ -2,7 +2,7 @@
 
 A skill is one `<name>.xgs.js` file: a `// ==XGooseSkill==` header, then an ES module whose default export is `defineSkill({...})`. Each exported function becomes `xgoose.skills.<namespace>.<fn>` in the page's MAIN world, where it runs with the user's own session, cookies and CORS rules.
 
-The agent reads this guide through `skill_help()` before `create_skill` or a substantial `edit_skill`. The canonical copy lives in `packages/skill-runtime/SKILL_AUTHORING.md`; the Chrome build ships `apps/chrome/skills/SKILL_AUTHORING.md`, and the website mirrors it at `/docs/skills`. Keep them identical.
+The agent reads this guide through `skill_help()` before `create_skill` or a substantial `edit_skill`. The canonical copy lives in `packages/skill-runtime/SKILL_AUTHORING.md`; the Firefox build ships `apps/firefox/skills/SKILL_AUTHORING.md`, and the website mirrors it at `/docs/skills`. Keep them identical.
 
 A good skill lets the agent answer with one or two calls, and every byte it returns is something the answer can use.
 
@@ -206,16 +206,3 @@ Built-in skills live in `apps/chrome/skills/`. When changing one: bump `@version
 ### Publishing
 
 **Publish to xgoose-web** on the skill's chip in the panel, or the form at [xgoose.org/publish/](https://xgoose.org/publish/), uploads the `.xgs.js` source. Republishing a name with a version that is not greater bumps the patch automatically. Local use never needs publishing.
-
-## Shared image reads
-
-The host exposes `read_images({urls:["https://cdn.example/image.jpg"]})` on every page, including pages without an active skill. It returns actual model image parts. Preserve URL query parameters. The host first copies matching loaded webpage images; remaining URLs are downloaded in the background. Long images are split within three image parts per call. `screenshot_page({tabId?,selector?,fullPage?})` attaches an element, viewport, or complete scrollable page screenshot; omit tabId for the current tab.
-
-Any skill may request the same transport by returning this object, including from `js_exec`:
-
-```js
-{ imageContext: { requested: true, delivery: "urls_only_until_host_attaches",
-  images: [{url, postUrl, postNumber}] } }
-```
-
-The host replaces pending URLs with image parts and keeps attribution plus segment/crop metadata in the dehydrated result. Image bytes are excluded from tool text and transcripts. Each encoded JPEG fits the Hosted image limit (240 KB before base64).

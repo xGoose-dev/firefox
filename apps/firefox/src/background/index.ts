@@ -1,4 +1,5 @@
 import {readImages} from './images';
+import {peerCommand, installPeerEvents} from './peers';
 import {listHostedModels} from "./hostedModels";
 import {providerFetch} from './providerFetch';
 import {executableSkillsForUrl, injectPackagedSkills, reconcileSkills, skillSnapshot, pageTarget} from "./packagedSkills";
@@ -69,7 +70,9 @@ chrome.runtime.onInstalled.addListener(async ({reason}) => {
   if (reason === "install") void chrome.tabs.create({url:chrome.runtime.getURL("onboarding.html")});
 });
 
+installPeerEvents();
 registerRouter({
+  "sw:peer": peerCommand,
   'sw:read_images': request=>readImages(request.urls),
   'sw:nga_images': (request,sender)=>readNgaImages(request.urls,sender.url??''),
   "sw:user_scripts_status": async () => {try{await chrome.userScripts.getScripts();return {enabled:true};}catch{return {enabled:false};}},
@@ -347,11 +350,11 @@ registerRouter({
       await chrome.tabs.create({ url });
     }
   },
-  "sw:get_page_info": async () => {
-    const [tab] = await chrome.tabs.query({
+  "sw:get_page_info": async (_payload, sender) => {
+    const tab = sender.tab ?? (await chrome.tabs.query({
       active: true,
       currentWindow: true,
-    });
+    }))[0];
     if (!tab?.url) return null;
     return { url: tab.url, title: tab.title ?? "" };
   },

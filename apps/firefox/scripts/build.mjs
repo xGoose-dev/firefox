@@ -104,6 +104,8 @@ function copyStatics() {
   if (existsSync(staticDir)) {
     for (const name of [
       'manifest.json',
+      'agent.html',
+      'agent.css',
       'popup.html',
       'popup.css',
       'options.html',

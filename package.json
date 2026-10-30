@@ -1,6 +1,6 @@
 {
   "name": "xgoose-firefox",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "private": true,
   "description": "xGoose for Firefox: in-page AI research and website skill manager.",
   "workspaces": [

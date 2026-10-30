@@ -19,6 +19,7 @@ import type { Provider, RegistrySkill, UserSkill } from "./types";
 export type HeaderBag = Record<string, string>;
 
 export type MessageMap = {
+  "sw:peer": {request: import("./peers").PeerRequest; response: import("./peers").PeerReply};
   'sw:read_images': {request:{urls:string[]};response:import('@/background/images').ImageReadResult[]};
   'sw:nga_images': {request:{urls:string[]};response:import('@/background/ngaImages').NgaImageResult[]};
   "sw:user_scripts_status": {request:void;response:{enabled:boolean}};

@@ -173,6 +173,16 @@ try{
   await driver.close();await driver.switchTo().window(extensionHandle);
  }
  contextFixture=null;console.log('Firefox context windows and automatic recovery passed',JSON.stringify(contextResults));
+ // Exercise the Exa account bridge in the real Firefox event page, with no paid provider call.
+ const search=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];(async()=>{
+  const bg=await browser.runtime.getBackgroundPage(),original=bg.fetch.bind(bg),calls=[];
+  await browser.storage.local.set({'xgoose.account':{user:{id:'search-owner',email:'fixture@example.test',name:null,avatar_url:null,email_verified:true,is_admin:false},accessToken:'fixture-token',refreshToken:'fixture-refresh',accessTokenExpiresAt:'2100-01-01T00:00:00Z',lastSeenAt:0}});
+  bg.fetch=async(input,init)=>{if(String(input)==='https://api.xgoose.org/ai/v1/search'){calls.push({body:JSON.parse(init.body),id:new bg.Headers(init.headers).get('Idempotency-Key'),authorized:new bg.Headers(init.headers).get('authorization')==='Bearer fixture-token'});return new bg.Response(JSON.stringify({provider:'exa',results:[{url:'https://example.org/source',highlights:['PUBLIC_EVIDENCE']}],charged_micros:7000}),{headers:{'content-type':'application/json'}});}return original(input,init);};
+  try{const id=crypto.randomUUID(),result=await browser.runtime.sendMessage({kind:'sw:search_web',payload:{query:'public missing fact',requestId:id,accountId:'search-owner'}});done({result,calls,id});}
+  finally{bg.fetch=original;await browser.storage.local.remove('xgoose.account');}
+ })().catch(e=>done({error:String(e)}));`);
+ assert.equal(search.result?.provider,'exa',JSON.stringify(search));assert.equal(search.result.charged_micros,7000);assert.deepEqual(search.calls,[{body:{query:'public missing fact'},id:search.id,authorized:true}]);
+ console.log('Firefox Exa search: authenticated event-page transport, query-only body and cost receipt passed');
  // Synthetic transport fixture in the real Firefox event page. No Google calls.
  await driver.switchTo().window(extensionHandle);
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];(async()=>{
@@ -190,7 +200,7 @@ try{
  assert.equal(telemetry.identity_version,2);assert.equal(telemetry.location_consent,false);assert.equal(telemetry.device.screen_resolution,'1440x900');assert.equal(telemetry.events.find(e=>e.name==='firefox_analytics_fixture').params.engagement_time_msec,15000);
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.getBackgroundPage().then(async bg=>{bg.analyticsFixture.technical=false;await browser.runtime.sendMessage({kind:'sw:track',payload:{event:'firefox_no_consent_fixture'}});setTimeout(()=>done(bg.analyticsFixture.requests.every(r=>r.events.every(e=>e.name!=='firefox_no_consent_fixture'))),1800);});`).then(value=>assert.equal(value,true));
  console.log('Firefox analytics: real event-page forwarding, device metadata, engagement and consent gates passed');
- const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,analyticsConsent:true,analyticsDevice:true};
+ const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,exaSearchTransport:true,analyticsConsent:true,analyticsDevice:true};
  await writeFile('artifacts/firefox-e2e/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }catch(error){if(driver){try{await driver.setContext(firefox.Context.CONTENT);await writeFile('artifacts/firefox-e2e/failure.png',await driver.takeScreenshot(),'base64');console.error(await driver.executeScript("return (document.querySelector('#xgoose-root')?.shadowRoot?.querySelector('.msgs')?.textContent||document.body.innerText).slice(-1500)"));console.error('provider requests',requests.length);}catch{}}throw error;}
 finally{if(driver)await driver.quit();server.close();}

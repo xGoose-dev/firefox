@@ -183,6 +183,13 @@ try{
  })().catch(e=>done({error:String(e)}));`);
  assert.equal(search.result?.provider,'exa',JSON.stringify(search));assert.equal(search.result.charged_micros,7000);assert.deepEqual(search.calls,[{body:{query:'public missing fact'},id:search.id,authorized:true}]);
  console.log('Firefox Exa search: authenticated event-page transport, query-only body and cost receipt passed');
+ // Real Firefox notifications remain opt-in and receipts enter Hosted transcript uploads.
+ const notificationState=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.sendMessage({kind:'sw:notification_status'}).then(done,e=>done({error:String(e)}));`);
+ assert.equal(notificationState.enabled,false);assert.equal(notificationState.supported,true);
+ await driver.executeScript("location.href=arguments[0]",origin+'/options.html');
+ await driver.wait(until.elementLocated(By.id('notificationsEnabled')),10000);
+ assert.equal(await driver.findElement(By.id('notificationsEnabled')).isSelected(),false);
+ console.log('Firefox notifications: default off and optional browser permission declared');
  // Synthetic transport fixture in the real Firefox event page. No Google calls.
  await driver.switchTo().window(extensionHandle);
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];(async()=>{

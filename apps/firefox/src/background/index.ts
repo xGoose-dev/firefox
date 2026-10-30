@@ -1,3 +1,4 @@
+import {searchWeb,abortSearch} from "./search";
 import {readImages} from './images';
 import {peerCommand, installPeerEvents} from './peers';
 import {listHostedModels} from "./hostedModels";
@@ -72,6 +73,8 @@ chrome.runtime.onInstalled.addListener(async ({reason}) => {
 
 installPeerEvents();
 registerRouter({
+  "sw:search_web": searchWeb,
+  "sw:search_abort": abortSearch,
   "sw:peer": peerCommand,
   'sw:read_images': request=>readImages(request.urls),
   'sw:nga_images': (request,sender)=>readNgaImages(request.urls,sender.url??''),

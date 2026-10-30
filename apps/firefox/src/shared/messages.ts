@@ -21,6 +21,8 @@ export type HeaderBag = Record<string, string>;
 export type MessageMap = {
   "sw:search_web": {request:{query:string;requestId:string;accountId:string};response:import("./search").SearchReply};
   "sw:search_abort": {request:{requestId:string};response:void};
+  "sw:notification_status": {request:void;response:{supported:boolean;enabled:boolean}};
+  "sw:notification_emit": {request:import("./notifications").NotificationRequest;response:import("./notifications").NotificationReceipt};
   "sw:peer": {request: import("./peers").PeerRequest; response: import("./peers").PeerReply};
   'sw:read_images': {request:{urls:string[]};response:import('@/background/images').ImageReadResult[]};
   'sw:nga_images': {request:{urls:string[]};response:import('@/background/ngaImages').NgaImageResult[]};

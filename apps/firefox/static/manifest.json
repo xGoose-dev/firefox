@@ -124,6 +124,7 @@
     }
   },
   "optional_permissions": [
+    "notifications",
     "userScripts"
   ],
   "incognito": "not_allowed"

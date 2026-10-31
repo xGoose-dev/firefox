@@ -3,7 +3,7 @@ import firefox from 'selenium-webdriver/firefox.js';
 import {createServer} from 'node:http';
 import {resolve} from 'node:path';
 import {existsSync} from 'node:fs';
-import {mkdir, writeFile, rm} from 'node:fs/promises';
+import {mkdir, writeFile, rm, readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 const requests=[];
@@ -64,7 +64,7 @@ try{
  const initial=await driver.executeAsyncScript(`const done=arguments[arguments.length-1]; Promise.all([browser.permissions.contains({permissions:['userScripts']}),browser.storage.local.get('xgoose.settings')]).then(([permission,data])=>done({permission,settings:data['xgoose.settings']}));`);
  assert.equal(initial.permission,false);
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.set({'xgoose.settings':{provider:'openai-compat',apiKeys:{'openai-compat':'synthetic-test'},baseUrls:{'openai-compat':arguments[0]},model:'gpt-6-luna',thinking:true,analyticsEnabled:false,launcherVisibility:'always',language:'en'}}).then(()=>done(true),e=>done({error:e.message}));`,base);
- const skills=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.sendMessage({kind:'sw:list_skills'}).then(done,e=>done({error:e.message}));`);assert.equal(skills.length,37);for(const name of ['amazon','reddit','tieba','wikipedia'])assert.ok(skills.some(s=>s.name===name),name);
+ const skills=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.sendMessage({kind:'sw:list_skills'}).then(done,e=>done({error:e.message}));`);assert.equal(skills.length,JSON.parse(await readFile(resolve("apps/firefox/dist/skills/registry.json"),"utf8")).length);for(const name of ['amazon','reddit','tieba','wikipedia'])assert.ok(skills.some(s=>s.name===name),name);
  await writeFile('artifacts/firefox-e2e/options.png',await driver.takeScreenshot(),'base64');
  await driver.executeScript("location.href=arguments[0]",origin+'/onboarding.html');
  await driver.wait(until.elementLocated(By.id('connectionState')),10000);

@@ -1,4 +1,4 @@
-import {Builder, By, until} from 'selenium-webdriver';
+import {Builder, By, Key, until} from 'selenium-webdriver';
 import firefox from 'selenium-webdriver/firefox.js';
 import {createServer} from 'node:http';
 import {resolve} from 'node:path';
@@ -64,7 +64,7 @@ try{
  const initial=await driver.executeAsyncScript(`const done=arguments[arguments.length-1]; Promise.all([browser.permissions.contains({permissions:['userScripts']}),browser.storage.local.get('xgoose.settings')]).then(([permission,data])=>done({permission,settings:data['xgoose.settings']}));`);
  assert.equal(initial.permission,false);
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.set({'xgoose.settings':{provider:'openai-compat',apiKeys:{'openai-compat':'synthetic-test'},baseUrls:{'openai-compat':arguments[0]},model:'gpt-6-luna',thinking:true,analyticsEnabled:false,launcherVisibility:'always',language:'en'}}).then(()=>done(true),e=>done({error:e.message}));`,base);
- const skills=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.sendMessage({kind:'sw:list_skills'}).then(done,e=>done({error:e.message}));`);assert.equal(skills.length,JSON.parse(await readFile(resolve("apps/firefox/dist/skills/registry.json"),"utf8")).length);for(const name of ['amazon','reddit','tieba','wikipedia'])assert.ok(skills.some(s=>s.name===name),name);
+ const skills=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.sendMessage({kind:'sw:list_skills'}).then(done,e=>done({error:e.message}));`);assert.equal(skills.length,JSON.parse(await readFile(resolve("apps/firefox/dist/skills/registry.json"),"utf8")).length);for(const name of ['amazon','reddit','tieba','wikipedia','douban','weread','bilibili','google-flights','google-hotels'])assert.ok(skills.some(s=>s.name===name),name);
  await writeFile('artifacts/firefox-e2e/options.png',await driver.takeScreenshot(),'base64');
  await driver.executeScript("location.href=arguments[0]",origin+'/onboarding.html');
  await driver.wait(until.elementLocated(By.id('connectionState')),10000);
@@ -106,6 +106,33 @@ try{
  console.log('page reading and streamed answer passed');
  assert.equal(requests.length,2);assert.ok(requests[1].messages.some(m=>m.role==='tool'&&JSON.stringify(m).includes('Research the web')),'read_page did not return page content');
  await writeFile('artifacts/firefox-e2e/research.png',await driver.takeScreenshot(),'base64');
+ // Global type-to-focus handlers see a shadow textarea as its DIV host.
+ // Keep real Firefox key events inside the panel while native editing works.
+ await driver.executeScript(`
+  const composer=document.createElement('textarea');composer.id='host-composer';document.body.appendChild(composer);
+  window.hostKeyEvents=[];
+  for(const type of ['keydown','keypress','keyup'])document.addEventListener(type,event=>{
+   window.hostKeyEvents.push(type);
+   if(type==='keydown'&&event.key.length===1&&!event.target.matches('textarea,input,[contenteditable="true"]'))composer.focus();
+  });
+ `);
+ const composer=await shadow.findElement(By.css('.in-text'));
+ await composer.sendKeys('Firefox keyboard focus');
+ assert.equal(await composer.getAttribute('value'),'Firefox keyboard focus');
+ assert.equal(await driver.findElement(By.id('host-composer')).getAttribute('value'),'');
+ assert.equal(await driver.executeScript('return window.hostKeyEvents.length'),0);
+ await composer.sendKeys(Key.SHIFT,Key.ENTER,Key.NULL);
+ assert.equal(await composer.getAttribute('value'),'Firefox keyboard focus\n');
+ await driver.executeScript(`document.querySelector('#xgoose-root').shadowRoot.querySelector('.in-text').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true,composed:true}));`);
+ assert.equal(requests.length,2,'IME Enter must not send');
+ await driver.findElement(By.id('host-composer')).sendKeys('Host typing');
+ assert.equal(await driver.findElement(By.id('host-composer')).getAttribute('value'),'Host typing');
+ await composer.sendKeys('returns to panel');
+ assert.equal(await composer.getAttribute('value'),'Firefox keyboard focus\nreturns to panel');
+ assert.equal(await driver.findElement(By.id('host-composer')).getAttribute('value'),'Host typing');
+ await composer.clear();
+ await writeFile('artifacts/firefox-e2e/keyboard-focus.png',await driver.takeScreenshot(),'base64');
+ console.log('Firefox keyboard isolation, focus, Shift+Enter, IME and host input passed');
  // Built-in page-world injection and structured invocation need no optional userScripts permission.
  await driver.switchTo().window(extensionHandle);
  await driver.executeScript("location.href=arguments[0]",origin+'/options.html');
@@ -207,7 +234,7 @@ try{
  assert.equal(telemetry.identity_version,2);assert.equal(telemetry.location_consent,false);assert.equal(telemetry.device.screen_resolution,'1440x900');assert.equal(telemetry.events.find(e=>e.name==='firefox_analytics_fixture').params.engagement_time_msec,15000);
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.getBackgroundPage().then(async bg=>{bg.analyticsFixture.technical=false;await browser.runtime.sendMessage({kind:'sw:track',payload:{event:'firefox_no_consent_fixture'}});setTimeout(()=>done(bg.analyticsFixture.requests.every(r=>r.events.every(e=>e.name!=='firefox_no_consent_fixture'))),1800);});`).then(value=>assert.equal(value,true));
  console.log('Firefox analytics: real event-page forwarding, device metadata, engagement and consent gates passed');
- const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,exaSearchTransport:true,analyticsConsent:true,analyticsDevice:true};
+ const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,keyboardIsolation:true,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,exaSearchTransport:true,analyticsConsent:true,analyticsDevice:true};
  await writeFile('artifacts/firefox-e2e/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }catch(error){if(driver){try{await driver.setContext(firefox.Context.CONTENT);await writeFile('artifacts/firefox-e2e/failure.png',await driver.takeScreenshot(),'base64');console.error(await driver.executeScript("return (document.querySelector('#xgoose-root')?.shadowRoot?.querySelector('.msgs')?.textContent||document.body.innerText).slice(-1500)"));console.error('provider requests',requests.length);}catch{}}throw error;}
 finally{if(driver)await driver.quit();server.close();}

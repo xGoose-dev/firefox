@@ -11,6 +11,7 @@ let socket: WebSocket | undefined,
 const pending = new Map<string, Set<Promise<unknown>>>(),
   metadata = new Map<string, Promise<any>>();
 const seen = new Map<string, Promise<any>>();
+const ending = new Set<string>();
 function edit(id: string, fn: (s: any) => void) {
   const next = (metadata.get(id) ?? Promise.resolve())
     .catch(() => {})
@@ -71,6 +72,7 @@ function url(value: string) {
   return u.href;
 }
 async function dispatch(request: any): Promise<any> {
+  if (!getSettings().localMcpEnabled) throw Error("Local MCP control disabled");
   const a = request.args,
     id = a.sessionId;
   if (request.name === "start_session") {
@@ -286,6 +288,19 @@ export async function connectLocalMcp() {
   };
   ws.onmessage = (event) => {
     const req = JSON.parse(event.data);
+    if (req.name === "start_session") ending.delete(req.args.sessionId);
+    else if (req.name === "end_session") ending.add(req.args.sessionId);
+    else if (ending.has(req.args.sessionId)) {
+      ws.send(
+        JSON.stringify({
+          id: req.id,
+          error:
+            "Session is ending. Start or resume a session before issuing more calls.",
+        }),
+      );
+      return;
+    }
+
     let work = seen.get(req.id);
     if (!work) {
       work = Promise.resolve().then(() => dispatch(req));

@@ -12,6 +12,7 @@ const pending = new Map<string, Set<Promise<unknown>>>(),
   metadata = new Map<string, Promise<any>>();
 const seen = new Map<string, Promise<any>>();
 const ending = new Set<string>();
+let recovered = false;
 function edit(id: string, fn: (s: any) => void) {
   const next = (metadata.get(id) ?? Promise.resolve())
     .catch(() => {})
@@ -270,6 +271,7 @@ export async function connectLocalMcp() {
   socket = undefined;
   old?.close();
   await loadAll();
+  if(!recovered){recovered=true;await disconnect();}
   const settings = SettingsSchema.parse(
     (await chrome.storage.local.get("xgoose.settings"))["xgoose.settings"] ??
       {},

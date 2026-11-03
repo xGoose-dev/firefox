@@ -64,5 +64,6 @@ export async function externalHistory(
     details.append(summary, body);
     view.append(details);
   }
+  if(session.status === "interrupted")for(const card of cards.values())if(card.el.classList.contains("running"))card.setResult(undefined,"Connection interrupted; execution outcome unknown. Not replayed.");
   root.append(view);
 }

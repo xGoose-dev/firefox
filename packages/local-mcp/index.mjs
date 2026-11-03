@@ -189,7 +189,7 @@ if (process.argv.includes("--broker")) {
     {
       capabilities: { tools: {} },
       instructions:
-        "Use start_session once per agent/task, reuse its sessionId across all tabs, and end_session when finished. Never share session IDs between independent agents. Use list_tabs or open_tab, then list_page_tools to discover page tools; call_page_tool needs the current documentId. The browser panel can stay closed. Unknown outcomes must not be automatically replayed.",
+        "Use start_session once per agent/task, reuse its sessionId across all tabs, and end_session when finished. Never share session IDs between independent agents. Use list_tabs first and reuse matching existing tabs with their current documentId. Use navigate_tab to reuse a tab at another URL and open_tab when a new page is needed. Close temporary task tabs with close_tab when finished. Use list_page_tools to discover page tools; call_page_tool needs the current documentId. The browser panel can stay closed. Unknown outcomes must not be automatically replayed.",
     },
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

@@ -1,0 +1,13 @@
+{
+  "name": "@xgoose/local-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "xgoose-mcp": "index.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.0",
+    "ws": "^8.18.0"
+  }
+}

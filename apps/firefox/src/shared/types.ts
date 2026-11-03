@@ -81,6 +81,8 @@ export const SettingsSchema = z.object({
    * Off by default on Firefox; flipping this off in the options page stops all event
    * collection. No ad identifiers are ever collected. See `shared/analytics.ts`.
    */
+  localMcpEnabled: z.boolean().default(false),
+  localMcpPort: z.number().int().min(1).max(65535).default(8765),
   analyticsEnabled: z.boolean().default(false),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
@@ -225,6 +227,13 @@ export type UserSkill = z.infer<typeof UserSkillSchema>;
 // ---------------------------------------------------------------------------
 
 export type StoredConversation = {
+  source?: "mcp";
+  ownerId?: string;
+  client?: string;
+  sites?: string[];
+  callCount?: number;
+  status?: string;
+  runId?: string;
   modelContext?: any[];
   /** Number of leading `messages` that `modelContext` already represents. */
   modelContextCovers?: number;

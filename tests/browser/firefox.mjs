@@ -94,6 +94,49 @@ try{
  await driver.get(base+'/article');
  await driver.wait(async()=>driver.executeScript(`return !!document.querySelector('#xgoose-root')?.shadowRoot?.querySelector('.toggle')`),20000,'content script did not mount');
  const shadow=await driver.findElement(By.id('xgoose-root')).getShadowRoot();
+
+ // Hide every launcher through Settings, then open through the toolbar route.
+ const articleHandle = await driver.getWindowHandle();
+ await driver.switchTo().window(extensionHandle);
+ await driver.get(origin+'/options.html');
+ await driver.wait(until.elementLocated(By.id('launcherVisibility')),10000);
+ await driver.executeScript("document.querySelector('#launcherVisibility').scrollIntoView({block:'center'});");
+ await driver.findElement(By.css('#launcherVisibility option[value="never"]')).click();
+ await driver.findElement(By.id('saveBtn')).click();
+ await driver.wait(async()=>driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.storage.local.get('xgoose.settings').then(d=>done(d['xgoose.settings'].launcherVisibility==='never'));`),10000);
+ await driver.navigate().refresh();
+ await driver.wait(async()=>driver.executeScript("return document.querySelector('#launcherVisibility')?.value==='never'"),10000,'never did not reload');
+ await driver.switchTo().window(articleHandle);
+ await driver.wait(async()=>driver.executeScript("return getComputedStyle(document.querySelector('#xgoose-root').shadowRoot.querySelector('.toggle')).display==='none'"),10000,'never did not hide existing launcher');
+ // Deliver the content message sent by the toolbar action.
+ await driver.switchTo().window(extensionHandle);
+ const toolbarResult = await driver.executeAsyncScript(`const url=arguments[0],done=arguments[arguments.length-1];(async()=>{const tabs=await browser.tabs.query({});const tab=tabs.find(t=>t.url===url);if(!tab)throw Error('Article tab missing: '+JSON.stringify(tabs.map(t=>({id:t.id,url:t.url}))));await browser.tabs.sendMessage(tab.id,{kind:'cs:toggle_panel'});return true;})().then(done,e=>done({error:String(e)}));`,base+'/article');
+ assert.equal(toolbarResult,true,JSON.stringify(toolbarResult));
+ await driver.switchTo().window(articleHandle);
+ await driver.wait(async()=>driver.executeScript("return !!document.querySelector('#xgoose-root').shadowRoot.querySelector('.panel.open')"),10000);
+ await (await shadow.findElement(By.css('.btn-close'))).click();
+ assert.equal(await driver.executeScript("return getComputedStyle(document.querySelector('#xgoose-root').shadowRoot.querySelector('.toggle')).display"),'none');
+ await driver.switchTo().window(extensionHandle);
+ await driver.executeScript("document.querySelector('#launcherVisibility').scrollIntoView({block:'center'});");
+ await driver.findElement(By.css('#launcherVisibility option[value="always"]')).click();
+ await driver.findElement(By.id('saveBtn')).click();
+ await driver.switchTo().window(articleHandle);
+ await driver.wait(async()=>(await shadow.findElement(By.css('.toggle'))).isDisplayed(),10000);
+ // Keep the launcher rendered while normal site layers and browser fullscreen cover it.
+ const launcherCovered = () => driver.executeScript(`const root=document.querySelector('#xgoose-root'),r=root.shadowRoot.querySelector('.toggle').getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)!==root;`);
+ for(const selector of ['html','video']) {
+  await driver.executeScript(`const player=document.createElement('div');player.id='site-player';player.style.cssText='position:fixed;inset:0;z-index:2000;background:black';const video=document.createElement('video');video.controls=true;player.append(video);const b=document.createElement('button');b.id='enter-fullscreen';b.textContent='Fullscreen';b.onclick=()=>document.querySelector(arguments[0]).requestFullscreen();player.append(b);document.body.append(player);`,selector);
+  assert.equal(await (await shadow.findElement(By.css('.toggle'))).isDisplayed(),true);
+  assert.equal(await launcherCovered(),true,'ordinary site layer covers launcher');
+  await driver.findElement(By.id('enter-fullscreen')).click();
+  await driver.wait(async()=>driver.executeScript('return !!document.fullscreenElement'),10000,selector+' did not enter native fullscreen');
+  assert.equal(await (await shadow.findElement(By.css('.toggle'))).isDisplayed(),true,selector+' keeps launcher rendered');
+  assert.equal(await launcherCovered(),true,selector+' fullscreen covers launcher');
+  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];document.exitFullscreen().then(()=>done(true));`);
+  await driver.executeScript("document.querySelector('#site-player').remove();");
+  assert.equal(await launcherCovered(),false,'launcher remains reachable after fullscreen');
+ }
+ console.log('launcher: Settings never persists, toolbar message opens hidden chat, ordinary layers and native fullscreen cover overlay');
  await (await shadow.findElement(By.css('.toggle'))).click();
  await driver.wait(async()=>driver.executeScript("return !!document.querySelector('#xgoose-root').shadowRoot.querySelector('.panel.open')"),10000,'panel did not open');
  await (await shadow.findElement(By.css('.in-text'))).sendKeys('Read this page and summarize how xgoose works.');
@@ -234,7 +277,7 @@ try{
  assert.equal(telemetry.identity_version,2);assert.equal(telemetry.location_consent,false);assert.equal(telemetry.device.screen_resolution,'1440x900');assert.equal(telemetry.events.find(e=>e.name==='firefox_analytics_fixture').params.engagement_time_msec,15000);
  await driver.executeAsyncScript(`const done=arguments[arguments.length-1];browser.runtime.getBackgroundPage().then(async bg=>{bg.analyticsFixture.technical=false;await browser.runtime.sendMessage({kind:'sw:track',payload:{event:'firefox_no_consent_fixture'}});setTimeout(()=>done(bg.analyticsFixture.requests.every(r=>r.events.every(e=>e.name!=='firefox_no_consent_fixture'))),1800);});`).then(value=>assert.equal(value,true));
  console.log('Firefox analytics: real event-page forwarding, device metadata, engagement and consent gates passed');
- const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,keyboardIsolation:true,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,exaSearchTransport:true,analyticsConsent:true,analyticsDevice:true};
+ const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,launcherNever:true,toolbarOpensHidden:true,normalOverlayStacking:true,nativeFullscreen:true,keyboardIsolation:true,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,exaSearchTransport:true,analyticsConsent:true,analyticsDevice:true};
  await writeFile('artifacts/firefox-e2e/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }catch(error){if(driver){try{await driver.setContext(firefox.Context.CONTENT);await writeFile('artifacts/firefox-e2e/failure.png',await driver.takeScreenshot(),'base64');console.error(await driver.executeScript("return (document.querySelector('#xgoose-root')?.shadowRoot?.querySelector('.msgs')?.textContent||document.body.innerText).slice(-1500)"));console.error('provider requests',requests.length);}catch{}}throw error;}
 finally{if(driver)await driver.quit();server.close();}

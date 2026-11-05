@@ -44,7 +44,7 @@ export async function externalHistory(
       cards.set(
         event.requestId,
         panel.createHistoryToolCard(
-          event.input?.name ?? event.toolName,
+          event.toolName === "call_skill" ? "skill_call" : event.toolName === "help_skill" ? "help" : event.input?.name ?? event.toolName,
           event.input?.arguments ?? event.input,
           view,
         ),

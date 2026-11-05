@@ -127,8 +127,5 @@
     "notifications",
     "userScripts"
   ],
-  "incognito": "not_allowed",
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  "incognito": "not_allowed"
 }

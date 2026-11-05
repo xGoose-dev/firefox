@@ -50,7 +50,7 @@ export async function flushTranscripts() {
     for(let batch=0;batch<6;batch++){
       const rows=await pendingEvents(account.user.id);
       if(!rows.length)return;
-      const first=rows[0];if(first.provider!=="external"&&!consent[first.provider])return;
+      const first=rows[0];if(!consent[first.provider])return;
       const candidates=rows.filter(r=>r.sessionId===first.sessionId&&r.provider===first.provider);
       const group:JournalEvent[]=[];let bytes=1024;
       for(const row of candidates){

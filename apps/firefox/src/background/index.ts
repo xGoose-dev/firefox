@@ -1,4 +1,3 @@
-import "./localMcp";
 import {searchWeb,abortSearch} from "./search";
 import {notificationStatus,emitNotification,installNotificationEvents} from "./notifications";
 import {readImages,prepareImageParts} from './images';
@@ -70,7 +69,7 @@ installSkillUpdateChecks();
 // Serialize claims across tabs so the brief skill notice appears only once per install.
 let noticeQueue = Promise.resolve(false);
 chrome.runtime.onInstalled.addListener(async ({reason}) => {
-  if(reason === "install"){const saved=await chrome.storage.local.get("xgoose.settings");await chrome.storage.local.set({"xgoose.analytics.installAt":Date.now(),"xgoose.settings":{...(saved["xgoose.settings"] as Record<string,unknown>??{}),analyticsEnabled:true}});}
+  if(reason === "install")await chrome.storage.local.set({"xgoose.analytics.installAt":Date.now()});
   if (reason === "install") void chrome.tabs.create({url:chrome.runtime.getURL("onboarding.html")});
 });
 

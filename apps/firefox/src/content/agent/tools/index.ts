@@ -560,13 +560,13 @@ export function buildSkillTools(): XgooseBuiltTool[] {
 
 /** Combined page-controller + skill tools — used by `createAgent`
  *  alongside the core tools from `@xgoose/core`. */
-export function buildLegacyTools(external = false): XgooseBuiltTool[] {
+export function buildLegacyTools(): XgooseBuiltTool[] {
   return [...buildPageControllerTools().map(tool=>{
     if(tool.name!=="js_exec")return tool;
     const execute=tool.definition.execute;
     return {...tool,definition:{...tool.definition,execute:async(input:any,opts:any)=>{
       const status=await send("sw:user_scripts_status",undefined);
-      if(!status.enabled){if(!external)window.dispatchEvent(new Event("xgoose:user-scripts-required"));throw new Error("Allow User Scripts is disabled. Stop retrying website tools; show the setup link and steps."+userScriptsReminder(chrome.runtime.id));}
+      if(!status.enabled){window.dispatchEvent(new Event("xgoose:user-scripts-required"));throw new Error("Allow User Scripts is disabled. Stop retrying website tools; show the setup link and steps."+userScriptsReminder(chrome.runtime.id));}
       return execute(input,opts);
     }}};
   }), ...SKILL_TOOLS];

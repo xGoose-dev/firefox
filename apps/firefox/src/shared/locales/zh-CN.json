@@ -409,5 +409,10 @@
   "Firefox has allowed usage analytics.": "Firefox 已允许分享使用统计。",
   "On in xgoose. Allow it in Firefox to start sharing.": "xgoose 中已开启。请在 Firefox 中授权后开始分享。",
   "Firefox could not request permission. Try again.": "Firefox 未能请求授权，请重试。",
-  "Could not save your analytics preference. Try again.": "未能保存使用统计设置，请重试。"
+  "Could not save your analytics preference. Try again.": "未能保存使用统计设置，请重试。",
+  "Connect Codex": "连接 Codex",
+  "Run this command once. Codex downloads and starts the bridge automatically. Node.js 22.19 or later is required.": "运行一次这条命令，Codex 会自动下载并启动桥接。需要 Node.js 22.19 或更新版本。",
+  "Copy setup command": "复制安装命令",
+  "Manual MCP configuration": "手动配置 MCP",
+  "For longer tasks, set the tool timeout to 660 seconds.": "较长任务可将工具超时设为 660 秒。"
 }

@@ -110,16 +110,31 @@ function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   const jsExecTimeoutMsLabelEl = $<HTMLSpanElement>("#jsExecTimeoutMsLabel");
   const mcpEnabled = $<HTMLInputElement>("#localMcpEnabled");
   const mcpPort = $<HTMLInputElement>("#localMcpPort");
-  const mcpPath = $<HTMLInputElement>("#localMcpPath");
   const mcpConfig = $<HTMLTextAreaElement>("#localMcpConfig");
   mcpEnabled.checked = settings.localMcpEnabled;
   mcpPort.value = String(settings.localMcpPort);
-  const config = () => { mcpConfig.value = `[mcp_servers.xgoose]
-command = "node"
-args = [${JSON.stringify(mcpPath.value || "/path/to/firefox/packages/local-mcp/index.mjs")}, "--port", "${mcpPort.value}"]
-tool_timeout_sec = 660`; };
-  config(); mcpPort.addEventListener("input", config);mcpPath.addEventListener("input",config);
-  $("#copyMcpConfig").addEventListener("click", () => void navigator.clipboard.writeText(mcpConfig.value));
+  const config = () => {
+    mcpConfig.value = `[mcp_servers.xgoose]
+command = "npx"
+args = ["--yes", "xgoose-mcp@next", "--port", "${mcpPort.value}"]
+tool_timeout_sec = 660`;
+  };
+  config();
+  mcpPort.addEventListener("input", config);
+  const mcpCommand = $<HTMLInputElement>("#localMcpCommand");
+  const command = () => {
+    mcpCommand.value = `codex mcp add xgoose -- npx --yes xgoose-mcp@next --port ${mcpPort.value}`;
+  };
+  command();
+  mcpPort.addEventListener("input", command);
+  $("#copyMcpCommand").addEventListener(
+    "click",
+    () => void navigator.clipboard.writeText(mcpCommand.value),
+  );
+  $("#copyMcpConfig").addEventListener(
+    "click",
+    () => void navigator.clipboard.writeText(mcpConfig.value),
+  );
   const mcpStatus = async () => {const data=await chrome.storage.local.get("xgoose.mcp.status");$("#localMcpStatus").textContent=String(data["xgoose.mcp.status"]??"Disabled");};
   void mcpStatus();chrome.storage.onChanged.addListener(()=>void mcpStatus());
   const analyticsEnabledEl = $<HTMLInputElement>("#analyticsEnabled");

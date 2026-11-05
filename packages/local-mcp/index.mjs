@@ -2,6 +2,7 @@
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { WebSocket, WebSocketServer } from "ws";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -9,6 +10,33 @@ import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+const packageInfo = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+);
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(`xgoose-mcp ${packageInfo.version}
+
+Usage: xgoose-mcp [--port 8765]
+
+Connect Codex in one command:
+  codex mcp add xgoose -- npx --yes xgoose-mcp@next --port 8765
+
+Or install globally:
+  npm install -g xgoose-mcp@next
+
+Enable Local MCP control in the Firefox extension with the same port.
+The stdio server starts the shared local bridge automatically.
+
+Options:
+  --port <number>  Local bridge port (default: 8765)
+  --version       Print package version
+  --help          Print this help`);
+  process.exit(0);
+}
+if (process.argv.includes("--version") || process.argv.includes("-v")) {
+  console.log(packageInfo.version);
+  process.exit(0);
+}
 const port = Number(
   process.argv.includes("--port")
     ? process.argv[process.argv.indexOf("--port") + 1]
@@ -230,7 +258,7 @@ if (process.argv.includes("--broker")) {
     waiting.clear();
   });
   const server = new Server(
-    { name: "xgoose", version: "0.1.0" },
+    { name: "xgoose", version: packageInfo.version },
     {
       capabilities: { tools: {} },
       instructions:

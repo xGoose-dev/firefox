@@ -1,3 +1,5 @@
+import {mountAnalyticsChoice} from "@/shared/analyticsChoice";
+import {loadAll,getSettings} from "@/shared/storage";
 import {mountAccountSection} from "@/shared/accountSection";
 import {initializeLocale,mountAnswerLanguage} from "@/shared/locale";
 void initializeLocale(document.body);
@@ -95,3 +97,17 @@ onAccountChange(()=>void refreshConnection());
 chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&changes['xgoose.settings'])void refreshConnection();});
 window.addEventListener('focus',()=>void refreshConnection());
 void refreshConnection();
+
+void (async()=>{
+ await loadAll();
+ await mountAnalyticsChoice({
+  checkbox:document.querySelector<HTMLInputElement>("#onboardingAnalyticsEnabled")!,
+  status:document.querySelector<HTMLElement>("#onboardingAnalyticsStatus")!,
+  button:document.querySelector<HTMLButtonElement>("#onboardingAllowAnalytics")!,
+  enabled:getSettings().analyticsEnabled,
+  onChange:async enabled=>{
+   const saved=await chrome.storage.local.get("xgoose.settings");
+   await chrome.storage.local.set({"xgoose.settings":{...(saved["xgoose.settings"] as object??{}),analyticsEnabled:enabled}});
+  }
+ });
+})();

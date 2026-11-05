@@ -402,5 +402,12 @@
   "Agent notifications": "Notificaciones del agente",
   "Off by default. Allow agent alerts and completion notifications for inactive pages. This setting applies only to this browser.": "Desactivadas por defecto. Permite avisos del agente y notificaciones de finalización en páginas inactivas. Solo se aplica a este navegador.",
   "Notification permission was denied. You can enable it in browser settings.": "Se denegó el permiso de notificaciones. Puedes activarlo en los ajustes del navegador.",
-  "Notifications are unavailable in this browser.": "Las notificaciones no están disponibles en este navegador."
+  "Notifications are unavailable in this browser.": "Las notificaciones no están disponibles en este navegador.",
+  "Help improve xgoose": "Ayuda a mejorar xgoose",
+  "Allow usage analytics in Firefox": "Permitir estadísticas de uso en Firefox",
+  "Usage analytics is off.": "Las estadísticas de uso están desactivadas.",
+  "Firefox has allowed usage analytics.": "Firefox ha permitido las estadísticas de uso.",
+  "On in xgoose. Allow it in Firefox to start sharing.": "Activado en xgoose. Permítelo en Firefox para empezar a compartir.",
+  "Firefox could not request permission. Try again.": "Firefox no pudo solicitar permiso. Vuelve a intentarlo.",
+  "Could not save your analytics preference. Try again.": "No se pudo guardar tu preferencia. Vuelve a intentarlo."
 }

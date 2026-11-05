@@ -79,11 +79,16 @@ export const SettingsSchema = z.object({
   launcherVisibility: z.enum(["always", "skill-sites", "never"]).default("skill-sites"),
   /**
    * Share anonymous, opt-out usage analytics (Google Analytics for Firebase).
-   * Off by default on Firefox; flipping this off in the options page stops all event
+   * On by default for new installs; Firefox permission is required before sending any event.
+   * Flipping this off in the options page stops all event
    * collection. No ad identifiers are ever collected. See `shared/analytics.ts`.
    */
-  analyticsEnabled: z.boolean().default(false),
+  localMcpEnabled: z.boolean().default(false),
+  localMcpPort: z.number().int().min(1).max(65535).default(8765),
+  analyticsEnabled: z.boolean().default(true),
 });
+/** Existing installs without an analytics choice retain the former default. */
+export const StoredSettingsSchema = SettingsSchema.extend({analyticsEnabled:z.boolean().default(false)});
 export type Settings = z.infer<typeof SettingsSchema>;
 export const DEFAULT_SETTINGS: Settings = SettingsSchema.parse({});
 
@@ -226,6 +231,14 @@ export type UserSkill = z.infer<typeof UserSkillSchema>;
 // ---------------------------------------------------------------------------
 
 export type StoredConversation = {
+  documents?: Record<string,string>;
+  source?: "mcp";
+  ownerId?: string;
+  client?: string;
+  sites?: string[];
+  callCount?: number;
+  status?: string;
+  runId?: string;
   modelContext?: any[];
   /** Number of leading `messages` that `modelContext` already represents. */
   modelContextCovers?: number;

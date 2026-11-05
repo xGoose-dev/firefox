@@ -402,5 +402,12 @@
   "Agent notifications": "Agent 通知",
   "Off by default. Allow agent alerts and completion notifications for inactive pages. This setting applies only to this browser.": "默认关闭。开启后允许 agent 主动提醒，并在后台页面任务完成时通知。此设置仅适用于当前浏览器。",
   "Notification permission was denied. You can enable it in browser settings.": "通知权限未获允许，可在浏览器设置中开启。",
-  "Notifications are unavailable in this browser.": "此浏览器暂不支持通知。"
+  "Notifications are unavailable in this browser.": "此浏览器暂不支持通知。",
+  "Help improve xgoose": "帮助改进 xgoose",
+  "Allow usage analytics in Firefox": "在 Firefox 中允许使用统计",
+  "Usage analytics is off.": "使用统计已关闭。",
+  "Firefox has allowed usage analytics.": "Firefox 已允许分享使用统计。",
+  "On in xgoose. Allow it in Firefox to start sharing.": "xgoose 中已开启。请在 Firefox 中授权后开始分享。",
+  "Firefox could not request permission. Try again.": "Firefox 未能请求授权，请重试。",
+  "Could not save your analytics preference. Try again.": "未能保存使用统计设置，请重试。"
 }

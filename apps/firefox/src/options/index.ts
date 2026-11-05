@@ -1,3 +1,4 @@
+import {mountAnalyticsChoice} from "@/shared/analyticsChoice";
 import {mountNotifications} from "./notifications";
 import {HOSTED_DEFAULT_CHOICE, resolveHostedModel, hostedModelLabel} from "@/shared/hostedModels";
 import {initializeLocale,saveLanguage,mountAnswerLanguage,translate,type LanguagePreference} from "@/shared/locale";
@@ -12,6 +13,7 @@ import {
   DEFAULT_SETTINGS,
   LayoutSchema,
   SettingsSchema,
+  StoredSettingsSchema,
   getProviderApiKey,
   getProviderBaseUrl,
   type Layout,
@@ -50,7 +52,7 @@ async function saveLayout(layout: Layout): Promise<void> {
 
 async function loadSettings(): Promise<Settings> {
   const data = await chrome.storage.local.get(SETTINGS_KEY);
-  const parsed = SettingsSchema.safeParse(data[SETTINGS_KEY] ?? {});
+  const parsed = (data[SETTINGS_KEY] ? StoredSettingsSchema : SettingsSchema).safeParse(data[SETTINGS_KEY] ?? {});
   return parsed.success ? parsed.data : { ...DEFAULT_SETTINGS };
 }
 
@@ -276,12 +278,7 @@ tool_timeout_sec = 660`; };
   launcherVisibilityEl.value = settings.launcherVisibility;
   jsExecTimeoutMsEl.value = String(settings.jsExecTimeoutMs);
   jsExecTimeoutMsLabelEl.textContent = formatTimeout(settings.jsExecTimeoutMs);
-  analyticsEnabledEl.checked = settings.analyticsEnabled && await chrome.permissions.contains({data_collection:['technicalAndInteraction']} as any);
-  analyticsEnabledEl.addEventListener('change', async () => {
-    if (analyticsEnabledEl.checked) {
-      analyticsEnabledEl.checked = await chrome.permissions.request({data_collection:['technicalAndInteraction','locationInfo']} as any);
-    }
-  });
+  await mountAnalyticsChoice({checkbox:analyticsEnabledEl,status:$("#analyticsPermissionStatus"),button:$<HTMLButtonElement>("#allowAnalytics"),enabled:settings.analyticsEnabled});
   updateProviderDependent(settings.provider);
 
   setAnalyticsActive(true);

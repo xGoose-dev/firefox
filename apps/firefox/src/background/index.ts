@@ -70,7 +70,11 @@ installSkillUpdateChecks();
 // Serialize claims across tabs so the brief skill notice appears only once per install.
 let noticeQueue = Promise.resolve(false);
 chrome.runtime.onInstalled.addListener(async ({reason}) => {
-  if(reason === "install"){const saved=await chrome.storage.local.get("xgoose.settings");await chrome.storage.local.set({"xgoose.analytics.installAt":Date.now(),"xgoose.settings":{...(saved["xgoose.settings"] as Record<string,unknown>??{}),analyticsEnabled:true}});}
+  if(reason === "install"){
+    const saved=await chrome.storage.local.get("xgoose.settings");
+    const settings=saved["xgoose.settings"] as Partial<import("@/shared/types").Settings>|undefined;
+    await chrome.storage.local.set({"xgoose.analytics.installAt":Date.now(),"xgoose.settings":{...settings,analyticsEnabled:settings ? settings.analyticsEnabled??false : true}});
+  }
   if (reason === "install") void chrome.tabs.create({url:chrome.runtime.getURL("onboarding.html")});
 });
 

@@ -241,38 +241,23 @@
               <div class="preference-row"><div class="preference-copy"><label for="launcherVisibility">Floating button</label><p class="hint">Choose where the launcher appears. An open chat stays visible.</p></div><select id="launcherVisibility"><option value="always">Show on every page</option><option value="skill-sites">Only on sites with a matching skill</option><option value="never">Always hide (open from the extension button)</option></select></div>
               <div class="preference-row"><div class="preference-copy"><span class="preference-label">Panel layout</span><p class="hint">Move the floating button and resize the panel on any page.</p><details class="layout-details"><summary>Current position and size</summary><div id="layoutInfo" class="hint"></div></details></div><button id="resetLayoutBtn" class="btn secondary compact" type="button">Reset position &amp; size</button></div>
               <label class="preference-row analytics-choice" for="notificationsEnabled"><span class="preference-copy"><span class="preference-label">Agent notifications</span><span class="hint">Off by default. Allow agent alerts and completion notifications for inactive pages. This setting applies only to this browser.</span><span id="notificationStatus" class="hint" role="status">Saved automatically.</span></span><input id="notificationsEnabled" type="checkbox"></label>
-              <label class="preference-row analytics-choice" for="analyticsEnabled"><span class="preference-copy"><span class="preference-label">Share usage analytics</span><span class="hint">Share setup steps, action outcomes and timing to improve xgoose. Signed-in events can be linked to your account. No messages, keys or full page URLs. Turn off anytime.</span></span><input id="analyticsEnabled" type="checkbox"></label>
+              <label class="preference-row analytics-choice" for="analyticsEnabled"><span class="preference-copy"><span class="preference-label">Share usage analytics</span><span class="hint">Share setup steps, action outcomes and timing to improve xgoose. Signed-in events can be linked to your account. No messages, keys or full page URLs. Turn off anytime.</span><span id="analyticsPermissionStatus" class="hint" role="status" aria-live="polite"></span></span><input id="analyticsEnabled" type="checkbox"></label>
+              <div class="analytics-permission-action"><button id="allowAnalytics" class="btn secondary compact" type="button" hidden>Allow usage analytics in Firefox</button></div>
             </div>
           </section>
 
           <section id="section-advanced" inert data-settings-loading aria-labelledby="advanced-heading">
-            <div class="section-head">
-              <h2 id="advanced-heading">Advanced</h2>
-            </div>
-            <p class="hint">
-              Sensitive header values (<code>Authorization</code>,
-              <code>Cookie</code>, …) are always redacted before being shown
-              to the model — this protection is on by default and cannot be
-              turned off.
-            </p>
-            <div class="field">
-              <label for="jsExecTimeoutMs" class="field-label">
-                <code>js_exec</code> timeout (ms)
-              </label>
-              <input
-                id="jsExecTimeoutMs"
-                type="number"
-                min="1000"
-                max="600000"
-                step="1000"
-              />
-              <input id="jsExecTimeoutMsToggle" type="hidden" />
-              <span class="hint">
-                Currently
-                <strong id="jsExecTimeoutMsLabel">30s</strong>. Increase if a
-                skill needs longer to scrape (e.g. large award calendars).
-              </span>
-            </div>
+            <details class="advanced-disclosure">
+              <summary id="advanced-heading"><span>Advanced</span><span class="hint">Local tools &amp; execution settings</span></summary>
+              <div class="advanced-content">
+                <div class="settings-group mcp-settings">
+                  <label class="preference-row analytics-choice" for="localMcpEnabled"><span class="preference-copy"><span class="preference-label">Local MCP control</span><span class="hint">Let Codex use webpage tools while the panel stays closed.</span></span><input id="localMcpEnabled" type="checkbox"></label>
+                  <div class="preference-row"><div class="preference-copy"><label for="localMcpPort">Connection port</label><p id="localMcpStatus" class="hint" role="status">Disabled</p></div><input id="localMcpPort" type="number" min="1" max="65535" value="8765"></div>
+                  <details class="mcp-config"><summary>Connect Codex</summary><p class="hint">Run this command once. Codex downloads and starts the bridge automatically. Node.js 22.19 or later is required.</p><input id="localMcpCommand" type="text" readonly aria-label="Codex setup command"><button id="copyMcpCommand" class="btn secondary compact" type="button">Copy setup command</button><details><summary>Manual MCP configuration</summary><textarea id="localMcpConfig" readonly rows="7" aria-label="Codex MCP configuration"></textarea><button id="copyMcpConfig" class="btn secondary compact" type="button">Copy configuration</button><p class="hint">For longer tasks, set the tool timeout to 660 seconds.</p></details></details>
+                </div>
+                <div class="settings-group"><div class="preference-row"><div class="preference-copy"><label for="jsExecTimeoutMs"><code>js_exec</code> timeout (ms)</label><p class="hint">Currently <strong id="jsExecTimeoutMsLabel">30s</strong></p></div><input id="jsExecTimeoutMs" type="number" min="1000" max="600000" step="1000"><input id="jsExecTimeoutMsToggle" type="hidden"></div></div>
+              </div>
+            </details>
           </section>
 
           <section id="section-about" aria-labelledby="about-heading">

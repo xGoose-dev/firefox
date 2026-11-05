@@ -402,5 +402,17 @@
   "Agent notifications": "Notificaciones del agente",
   "Off by default. Allow agent alerts and completion notifications for inactive pages. This setting applies only to this browser.": "Desactivadas por defecto. Permite avisos del agente y notificaciones de finalización en páginas inactivas. Solo se aplica a este navegador.",
   "Notification permission was denied. You can enable it in browser settings.": "Se denegó el permiso de notificaciones. Puedes activarlo en los ajustes del navegador.",
-  "Notifications are unavailable in this browser.": "Las notificaciones no están disponibles en este navegador."
+  "Notifications are unavailable in this browser.": "Las notificaciones no están disponibles en este navegador.",
+  "Help improve xgoose": "Ayuda a mejorar xgoose",
+  "Allow usage analytics in Firefox": "Permitir estadísticas de uso en Firefox",
+  "Usage analytics is off.": "Las estadísticas de uso están desactivadas.",
+  "Firefox has allowed usage analytics.": "Firefox ha permitido las estadísticas de uso.",
+  "On in xgoose. Allow it in Firefox to start sharing.": "Activado en xgoose. Permítelo en Firefox para empezar a compartir.",
+  "Firefox could not request permission. Try again.": "Firefox no pudo solicitar permiso. Vuelve a intentarlo.",
+  "Could not save your analytics preference. Try again.": "No se pudo guardar tu preferencia. Vuelve a intentarlo.",
+  "Connect Codex": "Conectar Codex",
+  "Run this command once. Codex downloads and starts the bridge automatically. Node.js 22.19 or later is required.": "Ejecuta este comando una vez. Codex descarga e inicia el puente automáticamente. Requiere Node.js 22.19 o posterior.",
+  "Copy setup command": "Copiar comando",
+  "Manual MCP configuration": "Configuración manual de MCP",
+  "For longer tasks, set the tool timeout to 660 seconds.": "Para tareas largas, configura el tiempo de espera de herramientas en 660 segundos."
 }

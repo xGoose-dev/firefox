@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "xgoose",
   "short_name": "xgoose",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Your AI assistant on the current page. Research with website skills, follow sources, and connect your own AI provider.",
   "icons": {
     "16": "images/icon-16.png",
@@ -127,5 +127,8 @@
     "notifications",
     "userScripts"
   ],
-  "incognito": "not_allowed"
+  "incognito": "not_allowed",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

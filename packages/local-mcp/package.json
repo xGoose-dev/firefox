@@ -1,0 +1,32 @@
+{
+  "name": "xgoose-mcp",
+  "version": "0.1.0-preview.0",
+  "type": "module",
+  "bin": {
+    "xgoose-mcp": "index.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.0",
+    "ws": "^8.18.0"
+  },
+  "description": "Local MCP bridge for the xgoose Firefox extension.",
+  "license": "MIT",
+  "files": [
+    "index.mjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xGoose-dev/firefox.git",
+    "directory": "packages/local-mcp"
+  },
+  "homepage": "https://github.com/xGoose-dev/firefox/tree/main/packages/local-mcp",
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  }
+}

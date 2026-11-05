@@ -1,4 +1,6 @@
 import "./firefoxStreamsShim";
+import {externalHistory} from "./externalHistory";
+import {installExternalTools} from "./externalTools";
 import {HOSTED_AUTH_STOPPED,isHostedAuthStopped} from '@/shared/hosted';
 import {PagePeers} from './peers';
 import {receivePeerResult} from '../../../../packages/core/src/peerAgents';
@@ -267,6 +269,7 @@ async function bootstrap(): Promise<void> {
     }
   };
   await refreshSkills();
+  installExternalTools();
 
   // Conversation state.
   let modelContext: any[] | null = null;
@@ -580,6 +583,7 @@ async function bootstrap(): Promise<void> {
     panel.setHistory(
       list.map((c) => ({
         id: c.id,
+        source:c.source,callCount:c.callCount,pageCount:c.sites?.length,
         title: c.title,
         origin: c.origin,
         updatedAt: c.updatedAt || c.createdAt,
@@ -592,6 +596,8 @@ async function bootstrap(): Promise<void> {
     void refreshHistory();
   });
   panel.onLoadConversation(async (id) => {
+    const external=await getConversation(id);
+    if(external?.source==="mcp"){await externalHistory(external,false,panel);return;}
     await stopBeforeConversationSwitch();
     await peers.reset(); peerModel = undefined;
     snapshotInFlightToMessages();
@@ -637,6 +643,8 @@ async function bootstrap(): Promise<void> {
   });
 
   panel.onExportConversation(async (id) => {
+    const external=await getConversation(id);
+    if(external?.source==="mcp"){await externalHistory(external,true);return;}
     // If the user is exporting the conversation they're actively chatting in,
     // capture the current in-flight turn (if any) into the persisted history
     // so the exported markdown reflects what's on-screen right now, not the

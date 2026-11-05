@@ -10,6 +10,7 @@ import {
   DEFAULT_SETTINGS,
   LayoutSchema,
   SettingsSchema,
+  StoredSettingsSchema,
   UserSkillSchema,
   type Layout,
   type ResumePayload,
@@ -53,7 +54,7 @@ export function loadAll(): Promise<void> {
   loaded = (async () => {
     const all = await chrome.storage.local.get(null);
     if (all[SETTINGS_KEY]) {
-      const parsed = SettingsSchema.safeParse(all[SETTINGS_KEY]);
+      const parsed = StoredSettingsSchema.safeParse(all[SETTINGS_KEY]);
       mirror.settings = parsed.success ? parsed.data : { ...DEFAULT_SETTINGS };
       // One-shot migration: if the user has a legacy flat `apiKey` /
       // `baseUrl` (from before per-provider keys), seed the map slot for
@@ -63,7 +64,7 @@ export function loadAll(): Promise<void> {
       // and lets them subsequently type a different key for a different
       // provider without losing this one.
       const s = mirror.settings;
-      let dirty = false;
+      let dirty = (all[SETTINGS_KEY] as Partial<Settings>).analyticsEnabled === undefined;
       if (s.apiKey && !s.apiKeys?.[s.provider]) {
         s.apiKeys = { ...(s.apiKeys ?? {}), [s.provider]: s.apiKey };
         dirty = true;
@@ -106,7 +107,7 @@ export function loadAll(): Promise<void> {
       for (const [key, change] of Object.entries(changes)) {
         const v = (change as chrome.storage.StorageChange).newValue;
         if (key === SETTINGS_KEY) {
-          const parsed = SettingsSchema.safeParse(v);
+          const parsed = (v === undefined ? SettingsSchema : StoredSettingsSchema).safeParse(v ?? {});
           mirror.settings = parsed.success
             ? parsed.data
             : { ...DEFAULT_SETTINGS };

@@ -1383,6 +1383,7 @@ export type AssistantBubbleHandle = {
 };
 
 export type HistoryItem = {
+  source?: "mcp";callCount?:number;pageCount?:number;
   id: string;
   title: string;
   origin: string;
@@ -1493,6 +1494,7 @@ export type Panel = {
    *  truncated pill with a × button (which fires `onCancelQueued`). */
   setQueuedMessages(items: string[]): void;
 
+  createHistoryToolCard(name:string,input:unknown,target:HTMLElement):ToolCardHandle;
   setHistory(items: HistoryItem[]): void;
   showHistory(visible: boolean): void;
   isHistoryOpen(): boolean;
@@ -2643,7 +2645,7 @@ export function createPanel(opts: CreatePanelOpts = {}): Panel {
     detail.innerHTML = parts.join("");
   }
 
-  function createToolCard(name: string, input: unknown): ToolCardHandle {
+  function createToolCard(name: string, input: unknown, target?: HTMLElement): ToolCardHandle {
     const meta = describeToolCall(name, input);
     const card = el(
       "tool running",
@@ -2665,7 +2667,7 @@ export function createPanel(opts: CreatePanelOpts = {}): Panel {
       meta.subtitle;
     const detail = card.querySelector(".tool-detail") as HTMLElement;
     renderToolDetail(detail, name, input, undefined);
-    append(card);
+    if(target)target.append(card);else append(card);
     return wrapToolCard(card, name, input);
   }
 
@@ -2943,6 +2945,7 @@ export function createPanel(opts: CreatePanelOpts = {}): Panel {
     addUserMessage,
     addAssistantBubble,
     addToolCard: createToolCard,
+    createHistoryToolCard:createToolCard,
     addReasoningBlock,
     addErrorMessage,
     showThinking,
@@ -3099,8 +3102,10 @@ export function createPanel(opts: CreatePanelOpts = {}): Panel {
       }
       // Group by origin: this site first, then others.
       const here = location.origin;
-      const sameOrigin = items.filter((i) => i.origin === here);
-      const otherOrigin = items.filter((i) => i.origin !== here);
+      const external = items.filter(i=>i.source === "mcp");
+      if(external.length){historyEl.appendChild(makeHistorySection("MCP sessions"));for(const it of external)historyEl.appendChild(makeHistoryRow(it));}
+      const sameOrigin = items.filter((i) => !i.source && i.origin === here);
+      const otherOrigin = items.filter((i) => !i.source && i.origin !== here);
       if (sameOrigin.length) {
         historyEl.appendChild(makeHistorySection("This site"));
         for (const it of sameOrigin) historyEl.appendChild(makeHistoryRow(it));
@@ -3247,7 +3252,7 @@ function makeHistoryRow(item: HistoryItem): HTMLElement {
   meta.className = "history-item-meta";
   const ago = formatRelative(item.updatedAt);
   const hostname = hostnameOf(item.origin);
-  meta.textContent = `${ago} · ${item.messageCount} msg · ${hostname}`;
+  meta.textContent = item.source === "mcp" ? `${ago} · ${item.callCount??0} calls · ${item.pageCount??0} pages · MCP` : `${ago} · ${item.messageCount} msg · ${hostname}`;
   body.appendChild(title);
   body.appendChild(meta);
 

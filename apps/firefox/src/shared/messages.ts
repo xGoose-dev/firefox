@@ -19,6 +19,7 @@ import type { Provider, RegistrySkill, UserSkill } from "./types";
 export type HeaderBag = Record<string, string>;
 
 export type MessageMap = {
+  "cs:external": {request:{op:"info"|"tools"|"call";documentId?:string;name?:string;arguments?:unknown;requestId?:string;ifVersion?:string};response:any};
   "sw:search_web": {request:{query:string;requestId:string;accountId:string};response:import("./search").SearchReply};
   "sw:search_abort": {request:{requestId:string};response:void};
   "sw:notification_status": {request:void;response:{supported:boolean;enabled:boolean}};
@@ -46,7 +47,7 @@ export type MessageMap = {
   "sw:consent_set": { request: {hosted:boolean;byok:boolean}; response: {hosted:boolean;byok:boolean} };
 
   "sw:reconcile_skills": { request: void; response: void };
-  "sw:session": { request: { op: "list" | "get" | "save" | "delete" | "event"; id?: string; value?: any }; response: any };
+  "sw:session": { request: { op: "list" | "get" | "save" | "delete" | "event" | "events"; id?: string; value?: any }; response: any };
   "sw:page_exec": { request: { code: string; args?: unknown[]; timeoutMs?: number; execId: string }; response: any };
   "sw:page_abort": { request: { execId: string }; response: void };
 
@@ -321,7 +322,7 @@ export function registerRouter(handlers: AnyHandlerMap): void {
     Promise.resolve()
       .then(() => handler(env.payload, sender))
       .then((value) => sendResponse(value))
-      .catch((err) => sendResponse({ __error: err?.message ?? String(err) }));
+      .catch((err) => sendResponse({ __error: err?.message ?? String(err), code:err?.code, details:err?.details }));
     return true;
   });
 }

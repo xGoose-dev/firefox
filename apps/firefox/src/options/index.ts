@@ -116,14 +116,14 @@ function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   const config = () => {
     mcpConfig.value = `[mcp_servers.xgoose]
 command = "npx"
-args = ["--yes", "xgoose-mcp@next", "--port", "${mcpPort.value}"]
+args = ["--yes", "xgoose-mcp@latest", "--port", "${mcpPort.value}"]
 tool_timeout_sec = 660`;
   };
   config();
   mcpPort.addEventListener("input", config);
   const mcpCommand = $<HTMLInputElement>("#localMcpCommand");
   const command = () => {
-    mcpCommand.value = `codex mcp add xgoose -- npx --yes xgoose-mcp@next --port ${mcpPort.value}`;
+    mcpCommand.value = `codex mcp add xgoose -- npx --yes xgoose-mcp@latest --port ${mcpPort.value}`;
   };
   command();
   mcpPort.addEventListener("input", command);

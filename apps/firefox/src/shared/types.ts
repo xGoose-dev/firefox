@@ -228,7 +228,6 @@ export type UserSkill = z.infer<typeof UserSkillSchema>;
 // ---------------------------------------------------------------------------
 
 export type StoredConversation = {
-  documents?: Record<string,string>;
   source?: "mcp";
   ownerId?: string;
   client?: string;

@@ -49,63 +49,8 @@ async function record(s: any, type: string, body: any = {}) {
 }
 async function page(tabId: number, request: any) {
   const r = await sendToTab(tabId, "cs:external", request);
-  if (r?.__error)
-    throw Object.assign(Error(r.__error), { code: r.code, details: r.details });
+  if (r?.__error) throw Error(r.__error);
   return r;
-}
-async function bindPage(sessionId: string, tabId: number, info: any) {
-  await edit(sessionId, (s) => {
-    s.documents = { ...s.documents, [tabId]: info.documentId };
-  });
-}
-function pageChanged(tabId: number, currentUrl?: string) {
-  return Object.assign(
-    Error(
-      "Page changed. Call list_tabs to inspect the current URL and refresh this session’s page binding.",
-    ),
-    {
-      code: "page_changed",
-      details: { tabId, currentUrl, executed: false, nextAction: "list_tabs" },
-    },
-  );
-}
-async function boundDocument(
-  sessionId: string,
-  tabId: number,
-  explicit?: string,
-) {
-  const info = await page(tabId, { op: "info" });
-  const current = await sessionCommand({ op: "get", id: sessionId });
-  const expected = explicit ?? current.documents?.[tabId];
-  if (expected && expected !== info.documentId)
-    throw pageChanged(tabId, info.url);
-  if (!expected) await bindPage(sessionId, tabId, info);
-  return info.documentId;
-}
-async function listTabs(sessionId: string) {
-  const tabs = await Promise.all(
-    (await chrome.tabs.query({})).map(async (tab) => {
-      let info;
-      try {
-        info = await page(tab.id!, { op: "info" });
-      } catch {}
-      return {
-        tabId: tab.id,
-        url: tab.url,
-        title: tab.title,
-        active: tab.active,
-        controllable: !!info,
-        skills: info?.skills ?? [],
-        documentId: info?.documentId,
-      };
-    }),
-  );
-  await edit(sessionId, (s) => {
-    s.documents = Object.fromEntries(
-      tabs.filter((t) => t.documentId).map((t) => [t.tabId, t.documentId]),
-    );
-  });
-  return tabs.map(({ documentId, ...tab }) => tab);
 }
 async function ready(tabId: number, previous?: string) {
   for (let i = 0; i < 100; i++) {
@@ -162,11 +107,7 @@ async function dispatch(request: any): Promise<any> {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            sessionId: s.id,
-            status: s.status,
-            ...(a.includeTabs ? { tabs: await listTabs(s.id) } : {}),
-          }),
+          text: JSON.stringify({ sessionId: s.id, status: s.status }),
         },
       ],
     };
@@ -223,7 +164,22 @@ async function dispatch(request: any): Promise<any> {
       }
       switch (request.name) {
         case "list_tabs":
-          result = await listTabs(id);
+          result = await Promise.all(
+            (await chrome.tabs.query({})).map(async (t) => {
+              let info;
+              try {
+                info = await page(t.id!, { op: "info" });
+              } catch {}
+              return {
+                tabId: t.id,
+                url: t.url,
+                title: t.title,
+                active: t.active,
+                controllable: !!info,
+                documentId: info?.documentId ?? null,
+              };
+            }),
+          );
           break;
         case "open_tab": {
           const tab = await chrome.tabs.create({
@@ -231,7 +187,6 @@ async function dispatch(request: any): Promise<any> {
             active: false,
           });
           result = { tabId: tab.id, ...(await ready(tab.id!)) };
-          if (result.documentId) await bindPage(id, tab.id!, result);
           target = { tabId: tab.id, site: new URL(a.url).hostname, ...result };
           break;
         }
@@ -242,54 +197,22 @@ async function dispatch(request: any): Promise<any> {
             tabId: a.tabId,
             ...(await ready(a.tabId, previous.documentId)),
           };
-          if (result.documentId) await bindPage(id, a.tabId, result);
           target = { ...target, ...result, site: new URL(a.url).hostname };
           break;
         }
         case "close_tab":
           await chrome.tabs.remove(a.tabId);
           result = { closed: true, tabId: a.tabId };
-          await edit(id, (v) => {
-            if (v.documents) delete v.documents[a.tabId];
-          });
           break;
         case "list_page_tools":
-          const info = await page(a.tabId, { op: "info" });
-          await bindPage(id, a.tabId, info);
-          result = await page(a.tabId, {
-            op: "tools",
-            name: a.name,
-            ifVersion: a.ifVersion,
-          });
+          result = await page(a.tabId, { op: "tools" });
           break;
-        case "call_skill":
-        case "help_skill":
         case "call_page_tool": {
-          const documentId = await boundDocument(id, a.tabId, a.documentId);
-          target.documentId = documentId;
-          const name =
-            request.name === "call_skill"
-              ? "skill_call"
-              : request.name === "help_skill"
-                ? "help"
-                : a.name;
-          const args =
-            request.name === "call_skill"
-              ? {
-                  skill: a.skill,
-                  function: a.function,
-                  args: a.args ?? {},
-                  timeoutMs: a.timeoutMs,
-                }
-              : request.name === "help_skill"
-                ? { skill: a.skill, function: a.function }
-                : a.arguments;
           const out = await page(a.tabId, {
             op: "call",
-            documentId,
-            name,
-            arguments: args,
-            ifVersion: a.ifVersion,
+            documentId: a.documentId,
+            name: a.name,
+            arguments: a.arguments,
             requestId: request.id,
           });
           result = out.result;
@@ -310,10 +233,6 @@ async function dispatch(request: any): Promise<any> {
         output: result,
         ...target,
       });
-      if (["open_tab", "navigate_tab"].includes(request.name)) {
-        const { documentId, ...view } = result;
-        result = view;
-      }
       return {
         content: content ?? [
           { type: "text", text: JSON.stringify(result) ?? "null" },
@@ -325,8 +244,6 @@ async function dispatch(request: any): Promise<any> {
         toolCallId: request.id,
         toolName: request.name,
         error: String(error),
-        code: (error as any)?.code,
-        details: (error as any)?.details,
         ...target,
       });
       throw error;
@@ -354,10 +271,7 @@ export async function connectLocalMcp() {
   socket = undefined;
   old?.close();
   await loadAll();
-  if (!recovered) {
-    recovered = true;
-    await disconnect();
-  }
+  if(!recovered){recovered=true;await disconnect();}
   const settings = SettingsSchema.parse(
     (await chrome.storage.local.get("xgoose.settings"))["xgoose.settings"] ??
       {},
@@ -410,9 +324,7 @@ export async function connectLocalMcp() {
           ws.send(
             JSON.stringify({
               id: req.id,
-              error: error.code
-                ? { code: error.code, message: error.message, ...error.details }
-                : String(error.message ?? error),
+              error: String(error.message ?? error),
             }),
           );
       },

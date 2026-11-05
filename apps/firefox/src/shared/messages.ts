@@ -19,7 +19,7 @@ import type { Provider, RegistrySkill, UserSkill } from "./types";
 export type HeaderBag = Record<string, string>;
 
 export type MessageMap = {
-  "cs:external": {request:{op:"info"|"tools"|"call";documentId?:string;name?:string;arguments?:unknown;requestId?:string;ifVersion?:string};response:any};
+  "cs:external": {request:{op:"info"|"tools"|"call";documentId?:string;name?:string;arguments?:unknown;requestId?:string};response:any};
   "sw:search_web": {request:{query:string;requestId:string;accountId:string};response:import("./search").SearchReply};
   "sw:search_abort": {request:{requestId:string};response:void};
   "sw:notification_status": {request:void;response:{supported:boolean;enabled:boolean}};
@@ -322,7 +322,7 @@ export function registerRouter(handlers: AnyHandlerMap): void {
     Promise.resolve()
       .then(() => handler(env.payload, sender))
       .then((value) => sendResponse(value))
-      .catch((err) => sendResponse({ __error: err?.message ?? String(err), code:err?.code, details:err?.details }));
+      .catch((err) => sendResponse({ __error: err?.message ?? String(err) }));
     return true;
   });
 }

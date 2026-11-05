@@ -21,11 +21,7 @@ const string = { type: "string" },
   integer = { type: "integer" };
 const specs = {
   start_session: {
-    properties: {
-      sessionId: string,
-      title: string,
-      includeTabs: { type: "boolean" },
-    },
+    properties: { sessionId: string, title: string },
     required: [],
   },
   end_session: { properties: { sessionId: string } },
@@ -35,36 +31,7 @@ const specs = {
     properties: { sessionId: string, tabId: integer, url: string },
   },
   close_tab: { properties: { sessionId: string, tabId: integer } },
-  list_page_tools: {
-    properties: {
-      sessionId: string,
-      tabId: integer,
-      name: string,
-      ifVersion: string,
-    },
-    required: ["sessionId", "tabId"],
-  },
-  help_skill: {
-    properties: {
-      sessionId: string,
-      tabId: integer,
-      skill: string,
-      function: string,
-      ifVersion: string,
-    },
-    required: ["sessionId", "tabId", "skill"],
-  },
-  call_skill: {
-    properties: {
-      sessionId: string,
-      tabId: integer,
-      skill: string,
-      function: string,
-      args: { type: "object" },
-      timeoutMs: integer,
-    },
-    required: ["sessionId", "tabId", "skill", "function"],
-  },
+  list_page_tools: { properties: { sessionId: string, tabId: integer } },
   call_page_tool: {
     properties: {
       sessionId: string,
@@ -73,26 +40,20 @@ const specs = {
       name: string,
       arguments: { type: "object" },
     },
-    required: ["sessionId", "tabId", "name", "arguments"],
   },
 };
 const descriptions = {
   start_session:
-    "Create or resume this agent’s cross-tab transcript. Set includeTabs:true to receive a compact tab list in the same call. Keep the returned sessionId for all calls by this agent.",
+    "Create or resume this agent’s cross-tab transcript. Keep its sessionId for every call; each agent uses its own session.",
   end_session: "Finish the session after pending tools settle.",
-  list_tabs:
-    "List tab IDs, URLs, titles and active skill names. Also refresh this session’s page bindings after navigation.",
+  list_tabs: "List tabs and current controllable document IDs.",
   open_tab: "Open an http(s) URL in a background tab and wait for tools.",
   navigate_tab: "Navigate the specified tab and wait for the new document.",
   close_tab: "Close the specified tab.",
-  help_skill:
-    "Describe a website skill. Omit function for a short name/summary directory; provide function for only that function’s full input schema. Cache by returned version; reuse known schemas instead of calling help every time. ifVersion returns unchanged when already known.",
-  call_skill:
-    "Call a website skill directly on tabId: skill, function, args. No documentId or nested skill_call wrapper is needed. Reuse known function arguments; help_skill is only needed for unfamiliar functions.",
   list_page_tools:
-    "Compact page-tool directory by default. Provide name to retrieve one full input schema. Reuse known schemas, or pass ifVersion for a conditional response.",
+    "Discover existing page and website skill tools and their JSON input schemas.",
   call_page_tool:
-    "Execute a page tool on tabId. Document binding is managed by the bridge; documentId is an optional legacy override. Use call_skill for website functions. Results include text and images.",
+    "Execute a discovered tool on an exact tab and document. Results include text and images. Errors and unknown outcomes are never automatically replayed.",
 };
 if (process.argv.includes("--broker")) {
   const clients = new Set(),
@@ -213,13 +174,7 @@ if (process.argv.includes("--broker")) {
     if (entry) {
       clearTimeout(entry.timer);
       waiting.delete(msg.id);
-      msg.error
-        ? entry.reject(
-            typeof msg.error === "string"
-              ? Error(msg.error)
-              : Object.assign(Error(msg.error.message), { detail: msg.error }),
-          )
-        : entry.resolve(msg.result);
+      msg.error ? entry.reject(Error(msg.error)) : entry.resolve(msg.result);
     }
   });
   socket.on("close", () => {
@@ -234,7 +189,7 @@ if (process.argv.includes("--broker")) {
     {
       capabilities: { tools: {} },
       instructions:
-        "Start one session per agent/task with includeTabs:true to get the sessionId and compact tab list together. Reuse that sessionId across tabs, then end_session. For website functions use call_skill(tabId,skill,function,args) directly. Known tools and function schemas can be reused without discovery. For unfamiliar functions use help_skill with a specific function; omitting function returns only a compact directory. Cache descriptions by version and use ifVersion when checking for changes. list_page_tools is optional: it returns a compact directory, or one full schema when name is specified. Document IDs are managed internally. On page_changed, inspect currentUrl and refresh with list_tabs before continuing. Reuse existing tabs; open_tab creates background pages, navigate_tab changes their URL, close_tab cleans up temporary task pages. The panel can stay closed. Unknown execution outcomes are not automatically replayed.",
+        "Use start_session once per agent/task, reuse its sessionId across all tabs, and end_session when finished. Never share session IDs between independent agents. Use list_tabs first and reuse matching existing tabs with their current documentId. Use navigate_tab to reuse a tab at another URL and open_tab when a new page is needed. Close temporary task tabs with close_tab when finished. Use list_page_tools to discover page tools; call_page_tool needs the current documentId. The browser panel can stay closed. Unknown outcomes must not be automatically replayed.",
     },
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -271,15 +226,7 @@ if (process.argv.includes("--broker")) {
     } catch (error) {
       return {
         isError: true,
-        content: [
-          {
-            type: "text",
-            text: error.detail
-              ? JSON.stringify(error.detail)
-              : String(error.message ?? error),
-          },
-        ],
-        ...(error.detail ? { structuredContent: { error: error.detail } } : {}),
+        content: [{ type: "text", text: String(error.message ?? error) }],
       };
     }
   });

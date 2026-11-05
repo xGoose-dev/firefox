@@ -209,7 +209,7 @@ const searchSkillsTool = defineTool({
 const helpTool = defineTool({
   name: "help",
   description:
-    "CLI-style `help` for a skill or a single skill function. Pass `{ skill }` for a compact directory containing only function names and one-line summaries. Pass `{ skill, function }` for full input JSON Schema, output schema (if declared), invocation snippet, and verbatim examples for that function. Reuse already-known function schemas. Call this for an unfamiliar skill function with `skill_call` — the JSON Schema is the only source of truth for the input shape (the runtime does not validate). Requires the skill to be ACTIVE on the current page; otherwise falls back to the static build-time summary stored in the registry.",
+    "CLI-style `help` for a skill or a single skill function. Pass `{ skill }` for a one-line summary of every function (name + summary + signature + ready-to-paste `js_exec` invocation snippet). Pass `{ skill, function }` for full input JSON Schema, output schema (if declared), invocation snippet, and verbatim examples for that function. Call this BEFORE using an unfamiliar skill function with `skill_call` — the JSON Schema is the only source of truth for the input shape (the runtime does not validate). Requires the skill to be ACTIVE on the current page; otherwise falls back to the static build-time summary stored in the registry.",
   inputSchema: z.object({
     skill: z
       .string()
@@ -239,7 +239,7 @@ const helpTool = defineTool({
       const info = snapshot[ns];
       const result = fnName ? info?.functions?.[fnName] : info?.functions;
       if (result) {
-        return {ok:true, skill:meta.name, namespace:ns, function:fnName ?? null, source:"live", help:fnName ? result : Object.fromEntries(Object.entries(result).map(([name,info]:[string,any])=>[name,{summary:info.summary}]))};
+        return {ok:true, skill:meta.name, namespace:ns, function:fnName ?? null, source:"live", help:result};
       }
     } catch {
       /* fall through to static fallback below */
@@ -291,6 +291,9 @@ const helpTool = defineTool({
           f.name,
           {
             summary: f.summary,
+            signature: f.signature,
+            invocation: f.invocation || invocationFor(f.name),
+            primary: f.primary,
           },
         ]),
       ),

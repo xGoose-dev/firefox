@@ -1,3 +1,5 @@
+import {bindDocumentAppearance} from "@/shared/appearance";
+void bindDocumentAppearance("onboarding");
 import {mountAnalyticsChoice} from "@/shared/analyticsChoice";
 import {loadAll,getSettings} from "@/shared/storage";
 import {mountAccountSection} from "@/shared/accountSection";

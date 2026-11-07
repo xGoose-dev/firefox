@@ -1,3 +1,4 @@
+import {APPEARANCE_PARAM_KEYS} from "@xgoose/ui";
 // Optional product telemetry through the first-party GA4 proxy. No content or credentials.
 import {send} from './messages';
 import {loadAll,getSettings} from './storage';
@@ -8,7 +9,7 @@ const QUEUE='xgoose.analytics.queue-v2',CLIENT='xgoose.analytics.clientId',SESSI
 const api:typeof chrome=(globalThis as any).browser??(globalThis as any).chrome;
 const backgroundContext=typeof location!=='undefined'&&location.pathname==='/_generated_background_page.html';
 interface Event {name:string;at:number;ownerId?:string;device?:ReturnType<typeof analyticsDevice>;params:TrackParams}
-const allowed=new Set(['platform','surface','provider','model','version','extension_version','session_id','flow_id','step','outcome','reason','error_kind','http_status','duration_ms','first_response_ms','steps','skill','count','is_fresh_convo','prompt_len','page','target','method','enabled','status','is_new','event_id','engagement_time_msec','client_id_kind']);
+const allowed=new Set([...APPEARANCE_PARAM_KEYS,'platform','surface','provider','model','version','extension_version','session_id','flow_id','step','outcome','reason','error_kind','http_status','duration_ms','first_response_ms','steps','skill','count','is_fresh_convo','prompt_len','page','target','method','enabled','status','is_new','event_id','engagement_time_msec','client_id_kind']);
 function safeParams(params:TrackParams):TrackParams {return Object.fromEntries(Object.entries(params).filter(([key,value])=>allowed.has(key)&&(typeof value==='boolean'||typeof value==='number'&&Number.isFinite(value)||typeof value==='string'&&/^[a-zA-Z0-9_./:-]{1,100}$/.test(value)&&!value.includes('://')&&!value.startsWith('sk-'))));}
 let job=Promise.resolve();let timer:ReturnType<typeof setTimeout>|undefined;
 const enqueue=(fn:()=>Promise<void>)=>{job=job.then(fn).catch(()=>{});};

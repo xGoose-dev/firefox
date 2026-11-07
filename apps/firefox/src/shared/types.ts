@@ -1,3 +1,4 @@
+import {normalizeAppearance} from "@xgoose/ui";
 import { z } from "zod";
 import {HOSTED_DEFAULT_CHOICE} from "./hostedModels";
 import {
@@ -61,6 +62,7 @@ export const SettingsSchema = z.object({
   baseUrl: z.string().default(""),
   thinking: z.boolean().default(false),
   theme: ThemeSchema.default("system"),
+  appearance: z.unknown().transform(normalizeAppearance).default({}),
   language: z.enum(["auto","en","zh-CN","es"]).default("auto"),
   answerLanguage: z.enum(["auto","en","zh-CN","es"]).default("auto"),
   jsExecTimeoutMs: z.number().int().min(1000).max(600_000).default(30_000),

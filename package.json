@@ -14,7 +14,8 @@
     "check": "npm run typecheck && npm test && npm run build",
     "e2e": "node tests/browser/firefox.mjs",
     "lint:amo": "addons-linter apps/firefox/dist --output json",
-    "package": "python3 scripts/package-firefox.py"
+    "package": "python3 scripts/package-firefox.py",
+    "test:appearance": "node tests/browser/appearance.mjs"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "1.3.0",

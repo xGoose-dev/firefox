@@ -357,12 +357,7 @@ registerRouter({
 
   // ── options / panel ─────────────────────────────────────────────────
   "sw:open_options": async () => {
-    if (chrome.runtime.openOptionsPage) {
-      await chrome.runtime.openOptionsPage();
-    } else {
-      const url = chrome.runtime.getURL("options.html");
-      await chrome.tabs.create({ url });
-    }
+    await chrome.tabs.create({url:chrome.runtime.getURL("options.html#appearance")});
   },
   "sw:get_page_info": async (_payload, sender) => {
     const tab = sender.tab ?? (await chrome.tabs.query({

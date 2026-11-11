@@ -127,16 +127,17 @@ try{
  for(const selector of ['html','video']) {
   await driver.executeScript(`const player=document.createElement('div');player.id='site-player';player.style.cssText='position:fixed;inset:0;z-index:2000;background:black';const video=document.createElement('video');video.controls=true;player.append(video);const b=document.createElement('button');b.id='enter-fullscreen';b.textContent='Fullscreen';b.onclick=()=>document.querySelector(arguments[0]).requestFullscreen();player.append(b);document.body.append(player);`,selector);
   assert.equal(await (await shadow.findElement(By.css('.toggle'))).isDisplayed(),true);
-  assert.equal(await launcherCovered(),true,'ordinary site layer covers launcher');
+  assert.equal(await launcherCovered(),false,'ordinary navigation cannot cover the launcher');
   await driver.findElement(By.id('enter-fullscreen')).click();
-  await driver.wait(async()=>driver.executeScript('return !!document.fullscreenElement'),10000,selector+' did not enter native fullscreen');
-  assert.equal(await (await shadow.findElement(By.css('.toggle'))).isDisplayed(),true,selector+' keeps launcher rendered');
+  await driver.wait(async()=>driver.executeScript("return !!document.fullscreenElement && document.querySelector('#xgoose-root').hasAttribute('data-fullscreen')"),10000,selector+' did not enter native fullscreen');
+  assert.equal(await (await shadow.findElement(By.css('.toggle'))).isDisplayed(),false,selector+' hides launcher without closing chat');
   assert.equal(await launcherCovered(),true,selector+' fullscreen covers launcher');
   await driver.executeAsyncScript(`const done=arguments[arguments.length-1];document.exitFullscreen().then(()=>done(true));`);
+  await driver.wait(async()=>driver.executeScript("return !document.fullscreenElement && !document.querySelector('#xgoose-root').hasAttribute('data-fullscreen')"),10000);
   await driver.executeScript("document.querySelector('#site-player').remove();");
   assert.equal(await launcherCovered(),false,'launcher remains reachable after fullscreen');
  }
- console.log('launcher: Settings never persists, toolbar message opens hidden chat, ordinary layers and native fullscreen cover overlay');
+ console.log('launcher: Settings never persists, toolbar message opens hidden chat, ordinary navigation stays below controls; native fullscreen hides overlay');
  await (await shadow.findElement(By.css('.toggle'))).click();
  await driver.wait(async()=>driver.executeScript("return !!document.querySelector('#xgoose-root').shadowRoot.querySelector('.panel.open')"),10000,'panel did not open');
  await (await shadow.findElement(By.css('.in-text'))).sendKeys('Read this page and summarize how xgoose works.');

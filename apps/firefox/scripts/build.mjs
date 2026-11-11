@@ -39,6 +39,8 @@ const entries = [
 
 const commonOpts = {
   bundle: true,
+  // AMO parses JavaScript files up to 5 MB; Responses adds provider tables.
+  minify: true,
   platform: 'browser',
   target: ['firefox153'],
   inject: [resolve(root, 'src/shared/firefoxAPI.ts')],

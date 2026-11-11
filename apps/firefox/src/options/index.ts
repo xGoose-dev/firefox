@@ -1,3 +1,4 @@
+import {mountServiceAccess} from "./serviceAccess";
 import {bindDocumentAppearance} from "@/shared/appearance";
 import {mountAnalyticsChoice} from "@/shared/analyticsChoice";
 import {mountNotifications} from "./notifications";
@@ -81,6 +82,10 @@ function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   const settings = await loadSettings();
   const connectionModeEl = $<HTMLSelectElement>("#connectionMode");
   const providerEl = $<HTMLSelectElement>("#provider");
+  const hostedProviderOption = new Option("xgoose Hosted AI", "xgoose-hosted");
+  hostedProviderOption.hidden = true;
+  hostedProviderOption.disabled = true;
+  providerEl.add(hostedProviderOption);
   const modelEl = $<HTMLSelectElement>("#model");
   const modelCustomToggleEl = $<HTMLInputElement>("#modelCustomToggle");
   const modelCustomRowEl = $<HTMLDivElement>("#modelCustomRow");
@@ -296,6 +301,9 @@ tool_timeout_sec = 660`;
   jsExecTimeoutMsLabelEl.textContent = formatTimeout(settings.jsExecTimeoutMs);
   await mountAnalyticsChoice({checkbox:analyticsEnabledEl,status:$("#analyticsPermissionStatus"),button:$<HTMLButtonElement>("#allowAnalytics"),enabled:settings.analyticsEnabled});
   updateProviderDependent(settings.provider);
+  const refreshServiceAccess=mountServiceAccess(()=>({provider:providerEl.value as Provider,baseUrl:baseUrlEl.value}));
+  baseUrlEl.addEventListener("change", refreshServiceAccess);
+  providerEl.addEventListener("change", refreshServiceAccess);
 
   setAnalyticsActive(true);
   track("options_page_opened", { provider: settings.provider });
@@ -377,7 +385,7 @@ tool_timeout_sec = 660`;
       "gemini-litellm":
         "Point this at your LiteLLM-Gemini proxy. The Google SDK uses this as baseURL.",
       "openai-compat":
-        "OpenAI Chat-Completions endpoint. We add /v1 if missing. Works with OpenAI, LiteLLM, Together, Ollama, Azure OpenAI, etc.",
+        "OpenAI-compatible API base URL. We add /v1 if missing. Sol, Terra and Astra use Responses; other models use Chat Completions. Works with OpenAI, LiteLLM, Together, Ollama, Azure OpenAI, etc.",
       "xgoose-hosted":
         "Routed through https://api.xgoose.org/ai using your signed-in account token; no key needed.",
     };

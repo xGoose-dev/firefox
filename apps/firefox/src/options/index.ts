@@ -303,7 +303,6 @@ tool_timeout_sec = 660`;
   updateProviderDependent(settings.provider);
   const refreshServiceAccess=mountServiceAccess(()=>({provider:providerEl.value as Provider,baseUrl:baseUrlEl.value}));
   baseUrlEl.addEventListener("change", refreshServiceAccess);
-  providerEl.addEventListener("change", refreshServiceAccess);
 
   setAnalyticsActive(true);
   track("options_page_opened", { provider: settings.provider });
@@ -359,6 +358,7 @@ tool_timeout_sec = 660`;
     const nextThinking = carryEntry?.thinking ?? false;
     populateModelDropdown(p, nextModel, nextThinking);
     updateProviderDependent(p);
+    refreshServiceAccess();
   });
 
   /** Read the model/thinking currently chosen in the dropdown or custom

@@ -4,6 +4,7 @@ import {notificationStatus,emitNotification,installNotificationEvents} from "./n
 import {readImages,prepareImageParts} from './images';
 import {capturePage} from './pageScreenshot';
 import {peerCommand, installPeerEvents} from './peers';
+import {memoryCommand} from './memory';
 import {listHostedModels} from "./hostedModels";
 import {providerFetch} from './providerFetch';
 import {executableSkillsForUrl, injectPackagedSkills, reconcileSkills, skillSnapshot, pageTarget} from "./packagedSkills";
@@ -86,6 +87,7 @@ registerRouter({
   "sw:notification_status": notificationStatus,
   "sw:notification_emit": emitNotification,
   "sw:peer": peerCommand,
+  "sw:memory": memoryCommand,
   'sw:capture_page': (args,sender)=>capturePage(args,sender),
   'sw:read_images': request=>readImages(request.urls,fetch,prepareImageParts,request.maxParts),
   'sw:nga_images': (request,sender)=>readNgaImages(request.urls,sender.url??''),

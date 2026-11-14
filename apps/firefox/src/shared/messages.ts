@@ -27,7 +27,8 @@ export type MessageMap = {
   "sw:notification_status": {request:void;response:{supported:boolean;enabled:boolean}};
   "sw:notification_emit": {request:import("./notifications").NotificationRequest;response:import("./notifications").NotificationReceipt};
   "sw:peer": {request: import("./peers").PeerRequest; response: import("./peers").PeerReply};
-  'sw:capture_page': {request:{tabId?:number;selector?:string;fullPage?:boolean};response:import('@/shared/imageParts').PreparedImage[]};
+  'sw:capture_page': {request:{requestId:string;tabId?:number;selector?:string;fullPage?:boolean};response:import('@/shared/imageParts').PreparedImage[]};
+  'sw:capture_abort': {request:{requestId:string};response:void};
   'sw:read_images': {request:{urls:string[];maxParts?:number};response:import('@/background/images').ImageReadResult[]};
   'sw:nga_images': {request:{urls:string[]};response:import('@/background/ngaImages').NgaImageResult[]};
   "sw:user_scripts_status": {request:void;response:{enabled:boolean}};

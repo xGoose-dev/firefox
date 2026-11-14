@@ -185,8 +185,9 @@ try{
  await driver.get('https://news.ycombinator.com/');
  await driver.wait(async()=>driver.executeScript(`return typeof window.xgoose?.skills?.hn?.frontPage==='function'||!!window.xgoose?.skills?.hn`),30000,'built-in HN skill did not load');
  const snapshot=await driver.executeScript('return Object.keys(window.xgoose.skills.hn)');assert.ok(snapshot.length>5);
+ // The options tab is already loaded. Reloading it here can destroy the
+ // asynchronous RPC callback after the old provider field satisfies the wait.
  await driver.switchTo().window(extensionHandle);
- await driver.executeScript("location.href=arguments[0]",origin+'/options.html');
  await driver.wait(until.elementLocated(By.id('provider')),10000);
  const builtin=await driver.executeAsyncScript(`const done=arguments[arguments.length-1];(async()=>{const [t]=await browser.tabs.query({url:'https://news.ycombinator.com/*'});const r=await browser.scripting.executeScript({target:{tabId:t.id},func:()=>browser.runtime.sendMessage({kind:'sw:skill_invoke',payload:{namespace:'hn',functionName:'getRateLimit',args:{},timeoutMs:5000}})});done(r[0].result)})().catch(e=>done({error:String(e)}));`);
  assert.equal(builtin.ok,true,JSON.stringify(builtin));console.log('built-in structured skill call passed without optional permission');

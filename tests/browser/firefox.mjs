@@ -7,6 +7,7 @@ import {mkdir, writeFile, rm, readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {reviewRecovery} from './review-recovery-firefox.mjs';
+import {networkCompatibility} from './network-compatibility-firefox.mjs';
 const requests=[];
 let contextFixture=null;
 const server=createServer(async(req,res)=>{
@@ -283,6 +284,7 @@ try{
  console.log('Firefox analytics: real event-page forwarding, device metadata, engagement and consent gates passed');
  const report={passed:true,browserVersion:version,builtInSkills:skills.length,providerRequests:requests.length,contextResults,launcherNever:true,toolbarOpensHidden:true,normalOverlayStacking:true,nativeFullscreen:true,keyboardIsolation:true,largeModelInputAbove128K:true,smallModelCompaction:true,contextRejectionRetry:true,readPage:true,streaming:true,builtinWithoutOptionalPermission:true,userScriptsPermission:true,customExecution:true,exaSearchTransport:true,analyticsConsent:true,analyticsDevice:true};
  report.recoveryResults=recoveryResults;
+ report.networkCompatibility=await networkCompatibility(driver,{base,extensionHandle});
  await writeFile('artifacts/firefox-e2e/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }catch(error){if(driver){try{await driver.setContext(firefox.Context.CONTENT);await writeFile('artifacts/firefox-e2e/failure.png',await driver.takeScreenshot(),'base64');console.error(await driver.executeScript("return (document.querySelector('#xgoose-root')?.shadowRoot?.querySelector('.msgs')?.textContent||document.body.innerText).slice(-1500)"));console.error('provider requests',requests.length);}catch{}}throw error;}
 finally{if(driver)await driver.quit();server.close();}

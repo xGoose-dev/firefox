@@ -1,3 +1,4 @@
+import { entryBytes } from "@/shared/bugReport";
 import type { StoredConversation } from "@/shared/types";
 import {emptyPeerState, type PeerState} from "../../../../packages/core/src/peerAgents";
 
@@ -7,7 +8,7 @@ import {emptyPeerState, type PeerState} from "../../../../packages/core/src/peer
 let opening: Promise<IDBDatabase> | undefined;
 function open(): Promise<IDBDatabase> {
   return opening ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open("xgoose-sessions", 1);
+    const request = indexedDB.open("xgoose-sessions", 2);
     let abandoned = false;
     const fail = (error: unknown) => {
       if (abandoned) return;
@@ -15,12 +16,15 @@ function open(): Promise<IDBDatabase> {
     };
     const timer = setTimeout(() => fail(new Error("Local session storage did not open. Reload xgoose, then refresh this page.")), 8000);
     request.onblocked = () => fail(new Error("Local session storage is blocked. Close other xgoose extension pages, then retry."));
-    request.onupgradeneeded = () => {
+    request.onupgradeneeded = (event) => {
       const db = request.result;
-      db.createObjectStore("sessions", { keyPath: "id" });
-      db.createObjectStore("events", { keyPath: "id" }).createIndex("sessionId", "sessionId");
-      db.createObjectStore("outbox", { keyPath: "id" });
-      db.createObjectStore("meta");
+      if (event.oldVersion === 0) {
+        db.createObjectStore("sessions", { keyPath: "id" });
+        db.createObjectStore("events", { keyPath: "id" }).createIndex("sessionId", "sessionId");
+        db.createObjectStore("outbox", { keyPath: "id" });
+        db.createObjectStore("meta");
+      }
+      request.transaction!.objectStore("events").createIndex("sessionTime", ["sessionId", "at"]);
     };
     request.onerror = () => {if (!abandoned) fail(request.error);};
     request.onsuccess = () => {
@@ -130,4 +134,32 @@ export async function clearPending(ownerId:string,provider?:"hosted"|"byok"|"ext
 
 export async function sessionEvents(id:string):Promise<JournalEvent[]> {
  return transaction(["events"],"readonly",(tx,done)=>{const r=tx.objectStore("events").index("sessionId").getAll(id);r.onsuccess=()=>done(r.result.sort((a,b)=>a.sequence-b.sequence));});
+}
+
+/** Bound journal reads to the session and moment the report form was opened. */
+export function readReportJournal(id: string, capturedAt: number) {
+  return transaction<{ events: Record<string, unknown>[]; omittedEvents: number }>(["events"], "readonly", (tx, done) => {
+    const index = tx.objectStore("events").index("sessionTime");
+    const range = IDBKeyRange.bound([id, 0], [id, capturedAt]);
+    const count = index.count(range);
+    const scan = index.openCursor(range, "prev");
+    let remaining = 560_000;
+    let scanned = 0;
+    const events: Record<string, unknown>[] = [];
+    scan.onsuccess = () => {
+      const cursor = scan.result;
+      if (!cursor || scanned++ >= 1000 || remaining < 100) {
+        done({ events: events.reverse(), omittedEvents: count.result - events.length });
+        return;
+      }
+      const row = cursor.value as JournalEvent;
+      const entry = { runId: row.runId, sequence: row.sequence, at: row.at, ...row.event };
+      const size = entryBytes(entry);
+      if (size <= remaining) {
+        events.push(entry);
+        remaining -= size;
+      }
+      cursor.continue();
+    };
+  });
 }

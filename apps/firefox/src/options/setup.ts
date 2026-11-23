@@ -38,8 +38,8 @@ export function mountSetup(): void {
 
   const banner=document.createElement("aside");
   banner.id="userScriptsAlert";banner.className="user-scripts-alert";banner.hidden=true;banner.setAttribute("role","alert");
-  banner.innerHTML=`<strong>Enable custom scripts and advanced actions</strong><p>Allow User Scripts is off. Built-in skills and page reading are ready to use. Enable it to run community skills, edited or online-updated skills, and custom JavaScript actions.</p><div class="permission-actions"><button type="button" class="btn primary compact" id="enableUserScripts">Enable User Scripts</button><a href="onboarding.html">See setup steps</a><button type="button" class="btn secondary compact" id="recheckUserScripts">Check again</button></div><p class="hint">Click Enable User Scripts and approve Firefox’s permission prompt. Return to your website and retry.</p>`;
-  document.querySelector(".layout")!.before(banner);
+  banner.innerHTML=`<strong>Enable custom scripts and advanced actions</strong><p>Allow User Scripts is off. Built-in skills and page reading are ready to use. Enable it to run community skills, edited or online-updated skills, and custom JavaScript actions.</p><div class="permission-actions"><button type="button" class="btn primary compact" id="enableUserScripts">Enable User Scripts</button><a href="onboarding.html">See setup steps</a><button type="button" class="btn secondary compact" id="recheckUserScripts">Check again</button></div>`;
+  document.querySelector(".settings-main")!.prepend(banner);
   banner.querySelector("#enableUserScripts")!.addEventListener("click",async()=>{track("permission_settings_opened",{page:"settings"});try{await chrome.permissions.request({permissions:["userScripts"]});await checkPermission();}catch{banner.querySelector("p")!.textContent=`Open xgoose Settings, then enable the optional User Scripts permission.`;}});
   banner.querySelector("#recheckUserScripts")!.addEventListener("click",()=>void checkPermission());
   const permissions = document.createElement("div");

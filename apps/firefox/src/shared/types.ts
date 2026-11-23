@@ -252,11 +252,3 @@ export type StoredConversation = {
   messages: any[];
   usage?: any;
 };
-
-export type ResumePayload = {
-  convoId: string;
-  note: string;
-  at: number;
-  fromUrl?: string;
-  fromOrigin?: string;
-};

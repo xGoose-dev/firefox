@@ -233,6 +233,7 @@ export type UserSkill = z.infer<typeof UserSkillSchema>;
 // ---------------------------------------------------------------------------
 
 export type StoredConversation = {
+  lastRun?: import("./bugReport").ReportRun;
   documents?: Record<string,string>;
   source?: "mcp";
   ownerId?: string;

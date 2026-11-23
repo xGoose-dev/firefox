@@ -1,3 +1,4 @@
+import { discardBugReport, getBugReport, openBugReport, sendBugReport } from "./bugReport";
 import "./localMcp";
 import {searchWeb,abortSearch} from "./search";
 import {notificationStatus,emitNotification,installNotificationEvents} from "./notifications";
@@ -110,6 +111,10 @@ registerRouter({
   "sw:skill_catalog": () => skillCatalog(),
   "sw:install_catalog_skill": ({slug,version}) => installCatalogSkill(slug,version),
   "sw:open_skill_catalog": async ({slugs}) => { await chrome.tabs.create({url:"https://xgoose.org/skills/"}); },
+  "sw:open_bug_report": (value, sender) => openBugReport(value, sender),
+  "sw:get_bug_report": ({ id }, sender) => getBugReport(id, sender),
+  "sw:discard_bug_report": ({ id }, sender) => discardBugReport(id, sender),
+  "sw:bug_report": (value, sender) => sendBugReport(value, sender),
   "sw:transcript_event": (value,sender) => recordJournal(value,sender),
   "sw:consent_get": () => getConsent(),
   "sw:consent_set": value => setConsent(value),

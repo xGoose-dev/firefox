@@ -1,4 +1,4 @@
-import {By} from 'selenium-webdriver';
+import {By,until} from 'selenium-webdriver';
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 
@@ -14,7 +14,7 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
  await background(`
   const saved=await browser.storage.local.get('xgoose.settings');
   const original=bg.fetch,send=bg.browser.tabs.sendMessage.bind(bg.browser.tabs);
-  bg.reviewRecovery={requests:0,freeze:true,hold:false,pending:[],saved:saved['xgoose.settings'],original,send};
+  bg.reviewRecovery={requests:0,freeze:true,hold:false,pending:[],reports:[],saved:saved['xgoose.settings'],original,send};
   bg.browser.tabs.sendMessage=(tabId,message,...args)=>bg.reviewRecovery.freeze&&message.kind==='cs:peer_identity'?new Promise(()=>{}):send(tabId,message,...args);
   bg.fetch=async(input,init)=>{
    const req=new bg.Request(input,init),url=new URL(req.url),f=bg.reviewRecovery;
@@ -23,6 +23,10 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
     const reply=()=>new bg.Response(frame({content:'FIREFOX_RECOVERED_'+index})+frame({},'stop')+'data: [DONE]\\n\\n',{headers:{'content-type':'text/event-stream'}});
     if(!f.hold)return reply();
     return new Promise((resolve,reject)=>{req.signal.addEventListener('abort',()=>reject(new bg.DOMException('Stopped','AbortError')),{once:true});f.pending.push(()=>resolve(reply()));});
+   }
+   if(url.hostname==='api.xgoose.org'&&url.pathname==='/bug-reports'){
+    const report=await req.json();f.reports.push(report);
+    return bg.Response.json({id:report.id},{status:201});
    }
    if(url.hostname==='api.xgoose.org')return new bg.Response(JSON.stringify({items:[],data:[],acknowledged:[]}),{headers:{'content-type':'application/json'}});
    return original(input,init);
@@ -37,7 +41,7 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
    const root=await driver.findElement(By.id('xgoose-root')).getShadowRoot();
    if(!await driver.executeScript("return !!document.querySelector('#xgoose-root').shadowRoot.querySelector('.panel.open')"))await (await root.findElement(By.css('.toggle'))).click();
    await driver.wait(()=>driver.executeScript("return !!document.querySelector('#xgoose-root').shadowRoot.querySelector('.panel.open')"),10000,'recovery panel did not open');
-   await driver.wait(async()=>(await root.findElement(By.css('.in-text'))).isDisplayed(),10000);
+   await driver.wait(async()=>(await root.findElement(By.css('.btn-send'))).isEnabled(),20000,'chat did not become ready');
    return {handle,root};
   };
   const page=await open('first');
@@ -50,8 +54,23 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
   await send('First question while peer registration is unresponsive');
   await driver.wait(async()=>(await text()).includes('First question'),5000,'submitted message did not appear while registration was pending');
   await driver.wait(async()=>(await text()).includes('did not respond'),20000);await idle();assert.equal(await count(),0);
+  const submitReport=async(selector,description)=>{
+   await use();
+   const before=await driver.getAllWindowHandles();
+   await (await page.root.findElement(By.css(selector))).click();
+   const reportHandle=await driver.wait(async()=>(await driver.getAllWindowHandles()).find(handle=>!before.includes(handle)),15000);
+   await driver.switchTo().window(reportHandle);
+   const sendButton=await driver.wait(until.elementLocated(By.css('.bug-send')),10000);
+   if(description)await driver.findElement(By.id('bug-description')).sendKeys(description);
+   await sendButton.click();
+   await driver.wait(async()=>(await driver.findElement(By.css('.bug-feedback')).getText()).includes('Report sent.'),15000);
+   await sendButton.click();
+   await driver.wait(async()=>!(await driver.getAllWindowHandles()).includes(reportHandle),10000);
+   await use();
+  };
+  await submitReport('.recovery-report');
   await background('bg.reviewRecovery.freeze=false;return true;');
-  await send('Retry after the peer is reachable');await answer(1);await idle();
+  await use();await (await page.root.findElement(By.css('.recovery-retry'))).click();await answer(1);await idle();
   const fault=async(mode)=>background(`
    const tab=(await browser.tabs.query({})).find(t=>t.url===arguments[0]);
    await browser.scripting.executeScript({target:{tabId:tab.id},world:'ISOLATED',func:(mode)=>{
@@ -86,6 +105,11 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
    await send(action+' D');await answer(before+3);await idle();assert.equal(await count(),before+3,'cancelled queued prompt was replayed');
    await background('bg.reviewRecovery.pending=[];return true;');
   }
+  await submitReport('.btn-bug','A manually reported issue');
+  const reports=await background('return bg.reviewRecovery.reports;');
+  assert.deepEqual(reports.map(r=>[r.client,r.kind]),[['firefox','interrupted'],['firefox','manual']]);
+  assert.match(reports[0].diagnostics.failure,/did not respond/);
+  assert.match(JSON.stringify(reports[1].diagnostics.messages),/FIREFOX_RECOVERED_/);
   await use();await writeFile('artifacts/firefox-e2e/review-recovery.png',await driver.takeScreenshot(),'base64');
   const result={peerTimeout:true,initialSaveTimeout:true,cleanupTimeout:true,queuedFollowup:true,secondPage:true,stopDiscardsQueue:true,newDiscardsQueue:true,providerRequests:await count(),modelRequestsReplayed:0,syntheticOnly:true};
   await writeFile('artifacts/firefox-e2e/review-recovery.json',JSON.stringify(result,null,2));console.log('Firefox review recovery',JSON.stringify(result));return result;

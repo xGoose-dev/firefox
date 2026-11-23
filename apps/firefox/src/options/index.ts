@@ -7,6 +7,7 @@ import {initializeLocale,saveLanguage,mountAnswerLanguage,translate,type Languag
 import { mountSkillUpdates } from "./skillUpdates";
 import { mountCatalog } from "./catalog";
 import { mountSetup } from "./setup";
+import { mountSectionNav } from "./sectionNav";
 /// <reference types="chrome" />
 
 import { send } from "@/shared/messages";
@@ -78,6 +79,7 @@ function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   await initializeLocale(document.body);
   void mountAccountSection().catch(err => console.error("[xgoose] account init failed", err));
   mountSetup();
+  mountSectionNav();
   void mountNotifications().catch(()=>{});
   const settings = await loadSettings();
   const connectionModeEl = $<HTMLSelectElement>("#connectionMode");

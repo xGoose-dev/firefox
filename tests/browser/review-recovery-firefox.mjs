@@ -1,4 +1,4 @@
-import {By} from 'selenium-webdriver';
+import {By,until} from 'selenium-webdriver';
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 
@@ -54,11 +54,21 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
   await send('First question while peer registration is unresponsive');
   await driver.wait(async()=>(await text()).includes('First question'),5000,'submitted message did not appear while registration was pending');
   await driver.wait(async()=>(await text()).includes('did not respond'),20000);await idle();assert.equal(await count(),0);
-  await use();await (await page.root.findElement(By.css('.recovery-report'))).click();
-  await (await page.root.findElement(By.css('.bug-send'))).click();
-  const confirmation=async()=>(await page.root.findElement(By.css('.bug-feedback'))).getText();
-  await driver.wait(async()=>(await confirmation()).includes('Report sent.'),15000);
-  await (await page.root.findElement(By.css('.bug-send'))).click();
+  const submitReport=async(selector,description)=>{
+   await use();
+   const before=await driver.getAllWindowHandles();
+   await (await page.root.findElement(By.css(selector))).click();
+   const reportHandle=await driver.wait(async()=>(await driver.getAllWindowHandles()).find(handle=>!before.includes(handle)),15000);
+   await driver.switchTo().window(reportHandle);
+   const sendButton=await driver.wait(until.elementLocated(By.css('.bug-send')),10000);
+   if(description)await driver.findElement(By.id('bug-description')).sendKeys(description);
+   await sendButton.click();
+   await driver.wait(async()=>(await driver.findElement(By.css('.bug-feedback')).getText()).includes('Report sent.'),15000);
+   await sendButton.click();
+   await driver.wait(async()=>!(await driver.getAllWindowHandles()).includes(reportHandle),10000);
+   await use();
+  };
+  await submitReport('.recovery-report');
   await background('bg.reviewRecovery.freeze=false;return true;');
   await use();await (await page.root.findElement(By.css('.recovery-retry'))).click();await answer(1);await idle();
   const fault=async(mode)=>background(`
@@ -95,11 +105,7 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
    await send(action+' D');await answer(before+3);await idle();assert.equal(await count(),before+3,'cancelled queued prompt was replayed');
    await background('bg.reviewRecovery.pending=[];return true;');
   }
-  await use();await (await page.root.findElement(By.css('.btn-bug'))).click();
-  await (await page.root.findElement(By.css('#bug-description'))).sendKeys('A manually reported issue');
-  await (await page.root.findElement(By.css('.bug-send'))).click();
-  await driver.wait(async()=>(await confirmation()).includes('Report sent.'),15000);
-  await (await page.root.findElement(By.css('.bug-send'))).click();
+  await submitReport('.btn-bug','A manually reported issue');
   const reports=await background('return bg.reviewRecovery.reports;');
   assert.deepEqual(reports.map(r=>[r.client,r.kind]),[['firefox','interrupted'],['firefox','manual']]);
   assert.match(reports[0].diagnostics.failure,/did not respond/);

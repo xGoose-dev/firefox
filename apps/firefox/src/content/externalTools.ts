@@ -1,4 +1,4 @@
-import { resultImageParts } from "@xgoose/core";
+import { boundedModelText, resultImageParts, websiteEvidence } from "@xgoose/core";
 import { buildLegacyTools } from "./agent/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { registerRouter } from "@/shared/messages";
@@ -117,11 +117,22 @@ export function installExternalTools() {
         const result = await tool.definition.execute(input, {
           toolCallId: request.requestId,
         });
-        const attachments = tool.definition.resultAttachments?.(result, input) ?? resultImageParts(result);
+        const envelope = tool.name === "js_exec"
+          ? result as { ok?: boolean; result?: unknown; resultId?: string } | null
+          : null;
+        const value = envelope?.ok ? envelope.result : result;
+        const projection = envelope?.ok
+          ? { ...envelope, result: websiteEvidence(value, location.origin) }
+          : tool.name === "skill_call" ? websiteEvidence(value, location.origin) : value;
+        const json = JSON.stringify(projection) ?? "null";
+        const text = tool.name === "skill_call" || tool.name === "js_exec"
+          ? boundedModelText(value, json, { id: envelope?.resultId, pageHandle: !!envelope?.resultId })
+          : json;
+        const attachments = tool.definition.resultAttachments?.(result, input) ?? resultImageParts(value);
         return {
           result,
           content: [
-            { type: "text", text: JSON.stringify(result) ?? "null" },
+            { type: "text", text },
             ...attachments.map((part) =>
               part.type === "file-data"
                 ? { type: "image", data: part.data, mimeType: part.mediaType }

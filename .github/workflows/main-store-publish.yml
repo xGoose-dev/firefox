@@ -1,7 +1,5 @@
 name: Submit Firefox Add-ons
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -14,11 +12,11 @@ concurrency:
   cancel-in-progress: false
 jobs:
   submit:
-    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'release' && !github.event.release.prerelease)
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      RELEASE_TAG: ${{ inputs.tag }}
       GH_TOKEN: ${{ github.token }}
       WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
       WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}

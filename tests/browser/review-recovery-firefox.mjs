@@ -38,6 +38,7 @@ export async function reviewRecovery(driver,{extensionHandle,base}) {
    if(!await driver.executeScript("return !!document.querySelector('#xgoose-root').shadowRoot.querySelector('.panel.open')"))await (await root.findElement(By.css('.toggle'))).click();
    await driver.wait(()=>driver.executeScript("return !!document.querySelector('#xgoose-root').shadowRoot.querySelector('.panel.open')"),10000,'recovery panel did not open');
    await driver.wait(async()=>(await root.findElement(By.css('.in-text'))).isDisplayed(),10000);
+   await driver.wait(async()=>(await root.findElement(By.css('.btn-send'))).isEnabled(),10000,'recovery composer did not finish loading');
    return {handle,root};
   };
   const page=await open('first');

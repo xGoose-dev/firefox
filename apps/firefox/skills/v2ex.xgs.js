@@ -1,7 +1,7 @@
 // ==XGooseSkill==
 // @name         v2ex
 // @namespace    v2ex
-// @version      0.2.5
+// @version      0.2.7
 // @description  V2EX public v1 and token-authenticated v2 read APIs: configurable search, topics, replies, node directory and node topics, profiles and notifications. Browser-session identity and explicit pagination.
 // @match        https://www.v2ex.com/*
 // @match        https://v2ex.com/*
@@ -14,7 +14,7 @@
 // @keyword      v2ex
 // @keyword      v站
 // @keyword      程序员社区
-// @action       概括这个帖子 | 概括当前帖的主帖、开头约 30 条回复及最新约 100 条回复，重叠去重，附来源链接。自行选择函数和分页参数；用户指定范围优先。
+// @action       概括这个帖子 | 概括当前帖的主帖和相关回复，附来源链接。按问题选择阅读范围和分页参数；用户指定范围优先。
 // @action       热帖 | 使用 v2ex.getHotTopics 获取当前热门主题，挑选值得关注的讨论，给出简短看点和原帖链接。列表是摘要，不要声称已读正文或全部回复。
 // @action       新帖 | 使用 v2ex.getLatestTopics 获取最新主题；若用户当前在具体节点，可用 getNodeTopics 读取该节点近期主题。标明范围和时间，给出看点与链接。
 // @action       随便看看 | 使用 v2ex skill，从热门或最新主题中选择一个有趣且与当前话题不重复的帖子；读取正文和相关回复后介绍有意思的观点并附来源。明确选择范围，不要反复搜索同一快照。
@@ -169,7 +169,7 @@ function boundedRaw(data) {
 
 function createClient(site, policy, allowed) {
   const key = `xgoose.reader.limits.${site}.v1`;
-  const state = readerStates.get(site) ?? { tail: Promise.resolve(), pending: new Map(), cache: new Map(), times: [], blockedUntil: 0, queued: 0 };
+  const state = readerStates.get(site) ?? { startTail: Promise.resolve(), pending: new Map(), cache: new Map(), times: [], blockedUntil: 0, queued: 0 };
   readerStates.set(site, state);
   function load() {
     try {
@@ -203,12 +203,23 @@ function createClient(site, policy, allowed) {
       if (state.times.length >= policy.perHour) wait = Math.max(wait, state.times[0] + 3600000 - now);
       if (wait > 10000) throw fault('rate_limited', 'Local request budget exhausted; retry after the indicated delay.', { retryAfterMs: wait });
       await pause(wait, signal);
-      state.times.push(Date.now()); save();
+      load();
+      const start = Date.now();
+      if (state.blockedUntil > start) throw fault('rate_limited', 'Waiting for the server cooldown.', { retryAfterMs: state.blockedUntil - start });
+      state.times.push(start); save();
     };
-    // Web Locks + localStorage share quotas among tabs on this origin. Without
-    // Web Locks the in-page queue still works; getRateLimit reports that limit.
-    if (globalThis.navigator?.locks) return navigator.locks.request(key, operation);
-    return operation();
+    // Reserve request starts serially. Network I/O runs after releasing the lock.
+    if (globalThis.navigator?.locks) {
+      try {
+        return await navigator.locks.request(key, { signal }, operation);
+      } catch (error) {
+        if (signal?.aborted) throw fault('aborted', 'Request cancelled.');
+        throw error;
+      }
+    }
+    const start = (state.startTail ??= Promise.resolve()).then(operation, operation);
+    state.startTail = start;
+    return start;
   }
   function request(input, options = {}) {
     const url = new URL(input, location.href);
@@ -217,14 +228,19 @@ function createClient(site, policy, allowed) {
     const ttl = options.ttl ?? 30000;
     const cached = state.cache.get(cacheKey);
     if (ttl && cached?.until > Date.now()) return Promise.resolve(structuredClone(cached.value));
-    if (ttl && state.pending.has(cacheKey)) return state.pending.get(cacheKey).then(structuredClone);
-    if (state.queued >= 20) return Promise.reject(fault('queue_full', 'At most 20 requests may wait; use pagination instead of unbounded fan-out.'));
+    if (ttl && state.pending.has(cacheKey)) {
+      return state.pending.get(cacheKey).then(structuredClone, error => {
+        // A cancelled leader can release the request for a still-active caller.
+        if (error.code === 'aborted' && !options.signal?.aborted) return request(input, options);
+        throw error;
+      });
+    }
     state.queued++;
-    const run = state.tail.catch(() => {}).then(async () => {
-      await reserve(options.signal);
+    const start = reserve(options.signal).finally(() => { state.queued--; });
+    const run = start.then(async () => {
       const controller = new AbortController();
       const abort = () => controller.abort();
-      if (options.signal?.aborted) abort();
+      if (options.signal?.aborted) throw fault('aborted', 'Request cancelled.');
       options.signal?.addEventListener('abort', abort, { once: true });
       const timer = setTimeout(abort, 15000);
       try {
@@ -253,12 +269,15 @@ function createClient(site, policy, allowed) {
           state.cache.set(cacheKey, { value, until: Date.now() + ttl });
         }
         return structuredClone(value);
+      } catch (error) {
+        if (options.signal?.aborted) throw fault('aborted', 'Request cancelled.');
+        throw error;
       } finally {
         clearTimeout(timer); options.signal?.removeEventListener('abort', abort);
       }
     });
-    state.tail = run; state.pending.set(cacheKey, run);
-    run.finally(() => { state.queued--; if (state.pending.get(cacheKey) === run) state.pending.delete(cacheKey); }).catch(() => {});
+    state.pending.set(cacheKey, run);
+    run.finally(() => { if (state.pending.get(cacheKey) === run) state.pending.delete(cacheKey); }).catch(() => {});
     return run;
   }
   return {
@@ -271,7 +290,7 @@ function createClient(site, policy, allowed) {
   };
 }
 
-const READING_INSTRUCTIONS = `For discussion summaries, default to the original post plus roughly the first 30 and latest 100 replies, deduplicating overlaps; follow user-specified ranges. Reply in the user's language. Use search/list results to choose sources and read relevant details. Include original URLs, authors, dates and reply links. Choose functions, sorting and pagination for the task. Pass the REPL signal for cancellable requests; getRateLimit reports local quotas.`;
+const READING_INSTRUCTIONS = `For discussion summaries, read the original post and choose relevant replies and pagination based on the question; follow user-specified ranges. As a reference, consider roughly the earliest 30 and latest 100 replies. For more in-depth questions, read additional relevant replies beyond those windows. Reply in the user's language. Use search/list results to choose sources and read relevant details. Include original URLs, authors, dates and reply links. Choose functions, sorting and pagination for the task. Pass the REPL signal for cancellable requests; getRateLimit reports local quotas.`;
 
 function credentialDialog(label, save) {
   const dialog = document.createElement('dialog');

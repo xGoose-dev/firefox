@@ -1,3 +1,4 @@
+import { resultImageParts } from "@xgoose/core";
 import { buildLegacyTools } from "./agent/tools";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { registerRouter } from "@/shared/messages";
@@ -116,14 +117,17 @@ export function installExternalTools() {
         const result = await tool.definition.execute(input, {
           toolCallId: request.requestId,
         });
-        const parts = tool.definition.toModelOutput?.(result, input);
+        const attachments = tool.definition.resultAttachments?.(result, input) ?? resultImageParts(result);
         return {
           result,
-          content: parts?.map((p) =>
-            p.type === "file-data"
-              ? { type: "image", data: p.data, mimeType: p.mediaType }
-              : p,
-          ) ?? [{ type: "text", text: JSON.stringify(result) ?? "null" }],
+          content: [
+            { type: "text", text: JSON.stringify(result) ?? "null" },
+            ...attachments.map((part) =>
+              part.type === "file-data"
+                ? { type: "image", data: part.data, mimeType: part.mediaType }
+                : part,
+            ),
+          ],
         };
       });
       queue = run.then(

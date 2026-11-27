@@ -2,6 +2,7 @@ import {createSearchTool} from "./searchTool";
 import {createNotificationTool} from "./notificationTool";
 import {isAgentPage} from "@/shared/peers";
 import type {XgooseBuiltTool} from "@xgoose/core";
+import {compressHostedImage} from "@xgoose/ui";
 import { normalizeHostedError } from "@/shared/hosted";
 import {resolveHostedModel} from "@/shared/hostedModels";
 // Chrome host wrapper around `@xgoose/core`'s `createAgent`. Composes the
@@ -67,6 +68,7 @@ export async function createAgent(opts: {
   const fetchProvider=opts.settings.provider==="xgoose-hosted"?createChromeProviderFetch({hostedAccountId:coreSettings.hostedAccountId}):getFetchImpl();
   return coreCreateAgent({
     settings: coreSettings,
+    compressHostedImage,
     fetchImpl: async (input, init) => {
       const started=Date.now();
       const response=await fetchProvider(input,init);

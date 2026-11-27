@@ -68,7 +68,7 @@ export async function createAgent(opts: {
   const fetchProvider=opts.settings.provider==="xgoose-hosted"?createChromeProviderFetch({hostedAccountId:coreSettings.hostedAccountId}):getFetchImpl();
   return coreCreateAgent({
     settings: coreSettings,
-    compressHostedImage,
+    compressHostedImage: opts.settings.provider === "xgoose-hosted" ? compressHostedImage : undefined,
     fetchImpl: async (input, init) => {
       const started=Date.now();
       const response=await fetchProvider(input,init);

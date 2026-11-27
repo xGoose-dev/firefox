@@ -1,1 +1,1 @@
-0.5.14 fixes the skill bar showing no available skills even after a website skill becomes usable. Skill chips, shortcuts and the launcher now stay synchronized with the skills detected before each chat turn. Firefox permission handling, privacy defaults and all 59 built-in skills are preserved.
+0.5.18 resizes oversized images before sending them to Hosted AI. Conversations can continue with the page text and other attachments when an image cannot fit.
